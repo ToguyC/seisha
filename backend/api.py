@@ -109,7 +109,7 @@ def get_tournament(tournament_id: int, session: Session = Depends(get_session)):
     series = session.exec(
         select(Series)
         .where(Series.tournament_id == tournament_id)
-        .order_by(Series.id.desc())
+        .order_by(Series.created_at.asc())
     ).all()
 
     if not series:

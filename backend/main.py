@@ -1,65 +1,9 @@
-import json
 import os
-from typing import List, Optional
+from typing import List
 
 import numpy as np
-from fastapi import Depends, FastAPI, HTTPException
-from pydantic import BaseModel
-from sqlmodel import Field, Relationship, Session, SQLModel, create_engine, select
 
 ARROWS_PER_SERIES = 4
-
-
-def get_session():
-    with Session(engine) as session:
-        yield session
-
-
-class ShotInput(BaseModel):
-    shooter_id: int
-    tournament_id: int
-    shot: int
-
-
-class TournamentInput(BaseModel):
-    name: str
-
-
-class ShooterInput(BaseModel):
-    name: str
-
-
-class Tournament(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    name: str
-
-    series: List["Series"] = Relationship(back_populates="tournament")
-
-
-class Shooter(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    name: str
-
-    series: List["Series"] = Relationship(back_populates="shooter")
-
-
-class Series(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    shots_raw: str
-
-    shooter_id: int = Field(foreign_key="shooter.id")
-    shooter: Optional[Shooter] = Relationship(back_populates="series")
-
-    tournament_id: int = Field(foreign_key="tournament.id")
-    tournament: Optional[Tournament] = Relationship(back_populates="series")
-
-    @property
-    def shots(self) -> List[int]:
-        return json.loads(self.shots_raw)
-
-    @shots.setter
-    def shots(self, value: List[int]):
-        self.shots_raw = json.dumps(value)
 
 
 def print_scoreboard(shots: np.ndarray, names: list = None, current_arrow: int = 0):
@@ -75,7 +19,7 @@ def print_scoreboard(shots: np.ndarray, names: list = None, current_arrow: int =
         print(i % 4 + 1, end=" ")
         if i % 4 == 3:
             print("| ", end="")
-    print("  中  |    %")
+    print("    中     |    %")
     print("-" * (13 + 4 * shots.shape[1] * 2 + 2 * shots.shape[1] + 2 + 14))
 
     for i, shooter in enumerate(shots):
@@ -88,18 +32,21 @@ def print_scoreboard(shots: np.ndarray, names: list = None, current_arrow: int =
                     (
                         " "
                         if current_arrow <= (s * ARROWS_PER_SERIES) + j
-                        else "O" if shot else "X"
+                        else "?" if shot == 2 else "O" if shot else "X"
                     )
                     for j, shot in enumerate(series)
                 ]
             )
             print(f"{str_series} | ", end="")
 
+        arrows = shooter.flatten()[:current_arrow]
+        hits = arrows == 1
+        ensure_hits = arrows == 2
         print(
-            f"{np.sum(shooter.flatten()[:current_arrow]):<2}/{total_arrows} ", end="| "
+            f"{np.sum(hits):<2}/{total_arrows} {f'(± {np.sum(ensure_hits)})'}", end="| "
         )
         print(
-            f"{np.sum(shooter.flatten()[:current_arrow]) / (shots.shape[1] * ARROWS_PER_SERIES) * 100:.2f} %"
+            f"{np.sum(hits) / (shots.shape[1] * ARROWS_PER_SERIES) * 100:.2f} %"
         )
 
 
@@ -108,10 +55,10 @@ def ask_shot(shooter: str = ""):
         try:
             shot = int(
                 input(
-                    f"Enter shot (0 or 1) {'for shooter ' + shooter if shooter else ''}: "
+                    f"Enter shot (0, 1, or 2) {'for shooter ' + shooter if shooter else ''}: "
                 )
             )
-            return shot > 0
+            return shot
         except ValueError:
             print("Invalid input. Please enter 0 or 1.")
 
@@ -191,147 +138,10 @@ def tournament(
                 )
 
 
-app = FastAPI()
-sqlite_file_name = "tournament.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
-
-engine = create_engine(sqlite_url)
-
-
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
-
-
 if __name__ == "__main__":
-    create_db_and_tables()
-
-
-@app.get("/series/:shooter_id/:tournament_id", response_model=List[Series])
-def get_series_by_shooter_and_tournament(
-    shooter_id: int,
-    tournament_id: int,
-    session: Session = Depends(get_session),
-):
-    statement = select(Series).where(
-        Series.shooter_id == shooter_id, Series.tournament_id == tournament_id
-    )
-    results = session.exec(statement).all()
-
-    if not results:
-        raise HTTPException(
-            status_code=404,
-            detail="No series found for this shooter in the given tournament.",
-        )
-
-    return results
-
-
-@app.post("/shot")
-def post_shot(data: ShotInput, session: Session = Depends(get_session)):
-    # Step 1: Find the latest incomplete Series
-    statement = (
-        select(Series)
-        .where(
-            Series.shooter_id == data.shooter_id,
-            Series.tournament_id == data.tournament_id,
-        )
-        .order_by(Series.id.desc())
-    )
-    series_list = session.exec(statement).all()
-
-    target_series: Optional[Series] = None
-
-    for s in series_list:
-        current_shots = s.shots
-        if len(current_shots) < ARROWS_PER_SERIES:
-            target_series = s
-            break
-
-    # Step 2: If no incomplete series, create a new one
-    if not target_series:
-        # Check if the tournament exists
-        tournament_statement = select(Tournament).where(
-            Tournament.id == data.tournament_id
-        )
-        tournament = session.exec(tournament_statement).first()
-        if not tournament:
-            raise HTTPException(
-                status_code=404,
-                detail="Tournament not found.",
-            )
-        # Check if the shooter exists
-        shooter_statement = select(Shooter).where(Shooter.id == data.shooter_id)
-        shooter = session.exec(shooter_statement).first()
-        if not shooter:
-            raise HTTPException(
-                status_code=404,
-                detail="Shooter not found.",
-            )
-
-        target_series = Series(
-            shooter_id=data.shooter_id, tournament_id=data.tournament_id
-        )
-        target_series.shots = []
-        session.add(target_series)
-        session.commit()
-        session.refresh(target_series)
-
-    # Step 3: Append the shot
-    current_shots = target_series.shots
-    current_shots.append(data.shot)
-    target_series.shots = current_shots
-
-    session.add(target_series)
-    session.commit()
-
-    return {
-        "message": "Shot recorded",
-        "series_id": target_series.id,
-        "shots": target_series.shots,
-    }
-
-
-@app.post("/tournament")
-def post_tournament(data: TournamentInput, session: Session = Depends(get_session)):
-    tournament = Tournament(name=data.name)
-    session.add(tournament)
-    session.commit()
-    session.refresh(tournament)
-    return tournament
-
-
-@app.post("/shooter")
-def post_shooter(data: ShooterInput, session: Session = Depends(get_session)):
-    shooter = Shooter(name=data.name)
-    session.add(shooter)
-    session.commit()
-    session.refresh(shooter)
-    return shooter
-
-
-@app.get("/tournament/{tournament_id}")
-def get_tournament(tournament_id: int, session: Session = Depends(get_session)):
-    tournament = session.get(Tournament, tournament_id)
-    if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament not found")
-    series = session.exec(
-        select(Series).where(Series.tournament_id == tournament_id)
-    ).all()
-    if not series:
-        raise HTTPException(
-            status_code=404, detail="No series found for this tournament"
-        )
-
-    return {
-        "tournament": tournament,
-        "series": series,
-    }
-
-
-# if __name__ == "__main__":
-#     # results = list(tournament(5, [0.8, 0.5, 0.1, 0.75], [0.5, 0.4, 0.5, 0.6], emulate=True, print_board=True))
-#     for current_arrow, shots in tournament(
-#         5, [0.8, 0.5, 0.1, 0.75], [0.5, 0.4, 0.5, 0.6], emulate=False, print_board=True
-#     ):
-#         shot_arrows = shots[1].flatten()[:current_arrow]
-#         print(np.sum(shot_arrows))
+    # results = list(tournament(5, [0.8, 0.5, 0.1, 0.75], [0.5, 0.4, 0.5, 0.6], emulate=True, print_board=True))
+    for current_arrow, shots in tournament(
+        5, [0.8, 0.5, 0.1, 0.75], [0.5, 0.4, 0.5, 0.6], emulate=False, print_board=True
+    ):
+        shot_arrows = shots[1].flatten()[:current_arrow]
+        print(np.sum(shot_arrows))
