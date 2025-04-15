@@ -37,9 +37,12 @@ class Series(SQLModel, table=True):
         self.shots_raw = json.dumps(value)
 
 
-def create_db_and_tables():
+def create_db_and_tables(engine):
     SQLModel.metadata.create_all(engine)
 
 
 if __name__ == "__main__":
-    create_db_and_tables()
+    sqlite_file_name = "tournament.db"
+    sqlite_url = f"sqlite:///{sqlite_file_name}"
+    engine = create_engine(sqlite_url)
+    create_db_and_tables(engine)
