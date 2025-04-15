@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, create_engine, select
 
 from .api_models import ShooterInput, ShotInput, TournamentInput
@@ -28,6 +29,13 @@ def get_hit_enum(value: int) -> Optional[HitEnum]:
 
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 sqlite_file_name = "tournament.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
 
