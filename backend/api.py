@@ -1,11 +1,11 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException
 from sqlmodel import Session, create_engine, select
 
 from .api_models import ShooterInput, ShotInput, TournamentInput
-from .sql_models import Series, Shooter, Tournament
+from .sql_models import HitEnum, Series, Shooter, Tournament
 
 ARROWS_PER_SERIES = 4
 
@@ -13,6 +13,18 @@ ARROWS_PER_SERIES = 4
 def get_session():
     with Session(engine) as session:
         yield session
+
+
+def get_hit_enum(value: int) -> Optional[HitEnum]:
+    match value:
+        case 0:
+            return HitEnum.miss
+        case 1:
+            return HitEnum.hit
+        case 2:
+            return HitEnum.ensure
+        case _:
+            return None
 
 
 app = FastAPI()
@@ -74,7 +86,11 @@ def post_shot(data: ShotInput, session: Session = Depends(get_session)):
         shots = []
 
     # Append and update
-    shots.append(data.shot)
+    hit_type = get_hit_enum(data.shot)
+    if hit_type is None:
+        raise HTTPException(status_code=400, detail="Invalid shot type.")
+    
+    shots.append(hit_type)
     series.shots = shots
     series.updated_at = datetime.now()
     session.commit()

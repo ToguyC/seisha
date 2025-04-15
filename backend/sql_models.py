@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from sqlalchemy import Column, DateTime, func
-from sqlmodel import Field, Relationship, Session, SQLModel, create_engine, select
+from sqlmodel import Field, Relationship, SQLModel, create_engine, Enum
 
 
 class Tournament(SQLModel, table=True):
@@ -28,6 +28,12 @@ class Shooter(SQLModel, table=True):
     series: List["Series"] = Relationship(back_populates="shooter")
 
 
+class HitEnum(int, Enum):
+    miss = 0
+    hit = 1
+    ensure = 2
+
+
 class Series(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     shots_raw: str
@@ -43,11 +49,11 @@ class Series(SQLModel, table=True):
     tournament: Optional[Tournament] = Relationship(back_populates="series")
 
     @property
-    def shots(self) -> List[int]:
+    def shots(self) -> List[HitEnum]:
         return json.loads(self.shots_raw)
 
     @shots.setter
-    def shots(self, value: List[int]):
+    def shots(self, value: List[HitEnum]):
         self.shots_raw = json.dumps(value)
 
 
