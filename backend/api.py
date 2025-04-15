@@ -1,10 +1,11 @@
-from typing import List, Optional
+from datetime import datetime
+from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
-from sqlmodel import Session, SQLModel, create_engine, select
+from sqlmodel import Session, create_engine, select
 
+from .api_models import ShooterInput, ShotInput, TournamentInput
 from .sql_models import Series, Shooter, Tournament
-from .api_models import ShotInput, TournamentInput, ShooterInput
 
 ARROWS_PER_SERIES = 4
 
@@ -75,6 +76,7 @@ def post_shot(data: ShotInput, session: Session = Depends(get_session)):
     # Append and update
     shots.append(data.shot)
     series.shots = shots
+    series.updated_at = datetime.now()
     session.commit()
 
     return {"message": "Shot recorded", "series_id": series.id, "shots": series.shots}
@@ -105,7 +107,9 @@ def get_tournament(tournament_id: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="Tournament not found")
 
     series = session.exec(
-        select(Series).where(Series.tournament_id == tournament_id)
+        select(Series)
+        .where(Series.tournament_id == tournament_id)
+        .order_by(Series.id.desc())
     ).all()
 
     if not series:
@@ -115,5 +119,9 @@ def get_tournament(tournament_id: int, session: Session = Depends(get_session)):
 
     return {
         "tournament": tournament,
-        "series": series,
+        "series": {
+            "shooter_id": series[0].shooter_id,
+            "tournament_id": series[0].tournament_id,
+            "shots": [s.shots for s in series],
+        },
     }

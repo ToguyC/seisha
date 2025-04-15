@@ -1,12 +1,18 @@
 import json
+from datetime import datetime
 from typing import List, Optional
 
+from sqlalchemy import Column, DateTime, func
 from sqlmodel import Field, Relationship, Session, SQLModel, create_engine, select
 
 
 class Tournament(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
+    created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
+    updated_at: datetime = Field(
+        sa_column=Column(DateTime, default=func.now(), onupdate=func.now())
+    )
 
     series: List["Series"] = Relationship(back_populates="tournament")
 
@@ -14,6 +20,10 @@ class Tournament(SQLModel, table=True):
 class Shooter(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
+    created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
+    updated_at: datetime = Field(
+        sa_column=Column(DateTime, default=func.now(), onupdate=func.now())
+    )
 
     series: List["Series"] = Relationship(back_populates="shooter")
 
@@ -21,6 +31,10 @@ class Shooter(SQLModel, table=True):
 class Series(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     shots_raw: str
+    created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
+    updated_at: datetime = Field(
+        sa_column=Column(DateTime, default=func.now(), onupdate=func.now())
+    )
 
     shooter_id: int = Field(foreign_key="shooter.id")
     shooter: Optional[Shooter] = Relationship(back_populates="series")
