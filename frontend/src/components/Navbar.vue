@@ -13,6 +13,7 @@ import Navlink from './Navlink.vue'
         <div class="flex gap-3">
           <div class="pr-3 border-r border-slate-800 text-slate-800">Admin</div>
           <Navlink to="/admin/archers" name="Archers" />
+          <Navlink to="/admin/tournaments" name="Tournaments" />
         </div>
       </div>
     </div>
