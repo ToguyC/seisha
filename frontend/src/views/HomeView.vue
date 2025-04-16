@@ -24,9 +24,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="flex flex-col">
-    <div class="my-10 mx-auto text-4xl font-bold">月来会　第１０回　定期弓道大会</div>
+  <div class="my-10 mx-auto text-4xl font-bold">月来会　第１０回　定期弓道大会</div>
 
-    <Match :shots="data" />
-  </main>
+  <Match :shots="data" class="w-1/2 mx-auto" />
 </template>

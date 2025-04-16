@@ -36,38 +36,40 @@ class Match(SQLModel, table=True):
     tournament: Optional[Tournament] = Relationship(back_populates="matches")
 
 
-class Shooter(SQLModel, table=True):
+class Archer(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     name: str
+    position: str = Field(default="zasha")
+    accuracy: float = Field(default=0.0)
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
     updated_at: datetime = Field(
         sa_column=Column(DateTime, default=func.now(), onupdate=func.now())
     )
 
-    series: List["Series"] = Relationship(back_populates="shooter")
+    series: List["Series"] = Relationship(back_populates="archer")
 
 
 class Series(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
-    shots_raw: str
+    arrows_raw: str
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
     updated_at: datetime = Field(
         sa_column=Column(DateTime, default=func.now(), onupdate=func.now())
     )
 
-    shooter_id: int = Field(foreign_key="shooter.id")
-    shooter: Optional[Shooter] = Relationship(back_populates="series")
+    archer_id: int = Field(foreign_key="archer.id")
+    archer: Optional[Archer] = Relationship(back_populates="series")
 
     match_id: int = Field(foreign_key="match.id")
     match: Optional[Match] = Relationship(back_populates="series")
 
     @property
-    def shots(self) -> List[HitEnum]:
-        return json.loads(self.shots_raw)
+    def arrows(self) -> List[HitEnum]:
+        return json.loads(self.arrows_raw)
 
-    @shots.setter
-    def shots(self, value: List[HitEnum]):
-        self.shots_raw = json.dumps(value)
+    @arrows.setter
+    def arrows(self, value: List[HitEnum]):
+        self.arrows_raw = json.dumps(value)
 
 
 def create_db_and_tables(engine):

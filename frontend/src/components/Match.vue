@@ -19,7 +19,7 @@ onMounted(() => {})
 </script>
 
 <template>
-  <table class="mx-auto w-1/3">
+  <table>
     <tbody class="text-center border [&>*]:border [&>*]:text-center">
       <tr class="[&>*]:border">
         <td class="w-20"></td>

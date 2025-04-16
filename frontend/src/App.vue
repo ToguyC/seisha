@@ -7,7 +7,7 @@ import Navbar from './components/Navbar.vue';
   <div class="app w-full h-screen">
     <Navbar />
 
-    <main>
+    <main class="container mx-auto flex flex-col p-4">
       <RouterView />
     </main>
   </div>
