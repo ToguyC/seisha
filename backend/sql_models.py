@@ -6,19 +6,38 @@ from sqlalchemy import Column, DateTime, func
 from sqlmodel import Field, Relationship, SQLModel, create_engine, Enum
 
 
+class HitEnum(int, Enum):
+    miss = 0
+    hit = 1
+    ensure = 2
+
+
 class Tournament(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     name: str
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
     updated_at: datetime = Field(
         sa_column=Column(DateTime, default=func.now(), onupdate=func.now())
     )
 
-    series: List["Series"] = Relationship(back_populates="tournament")
+    matches: List["Match"] = Relationship(back_populates="tournament")
+
+
+class Match(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
+    updated_at: datetime = Field(
+        sa_column=Column(DateTime, default=func.now(), onupdate=func.now())
+    )
+
+    series: List["Series"] = Relationship(back_populates="match")
+
+    tournament_id: int = Field(foreign_key="tournament.id")
+    tournament: Optional[Tournament] = Relationship(back_populates="matches")
 
 
 class Shooter(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     name: str
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
     updated_at: datetime = Field(
@@ -28,14 +47,8 @@ class Shooter(SQLModel, table=True):
     series: List["Series"] = Relationship(back_populates="shooter")
 
 
-class HitEnum(int, Enum):
-    miss = 0
-    hit = 1
-    ensure = 2
-
-
 class Series(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     shots_raw: str
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
     updated_at: datetime = Field(
@@ -45,8 +58,8 @@ class Series(SQLModel, table=True):
     shooter_id: int = Field(foreign_key="shooter.id")
     shooter: Optional[Shooter] = Relationship(back_populates="series")
 
-    tournament_id: int = Field(foreign_key="tournament.id")
-    tournament: Optional[Tournament] = Relationship(back_populates="series")
+    match_id: int = Field(foreign_key="match.id")
+    match: Optional[Match] = Relationship(back_populates="series")
 
     @property
     def shots(self) -> List[HitEnum]:

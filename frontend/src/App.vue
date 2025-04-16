@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import Navbar from './components/Navbar.vue';
 </script>
 
 <template>
-  <RouterView />
+  <div class="app w-full h-screen">
+    <Navbar />
+
+    <main>
+      <RouterView />
+    </main>
+  </div>
 </template>

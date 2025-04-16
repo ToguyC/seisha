@@ -7,9 +7,5 @@ class ShotInput(BaseModel):
     shot: int
 
 
-class TournamentInput(BaseModel):
-    name: str
-
-
 class ShooterInput(BaseModel):
     name: str
