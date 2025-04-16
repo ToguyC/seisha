@@ -14,7 +14,7 @@ const { to, name } = defineProps({
       @click="navigate"
       :class="[
         'font-semibold transition-color border-b-2 duration-100',
-        isActive
+        isActive || ($route.fullPath.startsWith(to) && to !== '/')
           ? 'text-amaranth-500 border-amaranth-500'
           : 'text-gray-500 border-white hover:text-amaranth-500 hover:border-amaranth-500',
       ]"

@@ -16,7 +16,7 @@ const router = createRouter({
       children: [
         { path: 'archers', component: Archers },
         { path: 'tournaments', component: Tournaments },
-        { path: 'tournaments/:id', component: SingleTournament },
+        { path: 'tournaments/:id', name: 'singleTournament', component: SingleTournament },
       ],
     },
   ],
