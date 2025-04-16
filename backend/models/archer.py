@@ -19,8 +19,8 @@ class ArcherBase(SQLModel):
 class Archer(ArcherBase, table=True):
     id: int = Field(default=None, primary_key=True)
 
-    series: List["Series"] = Relationship(back_populates="archer")
-    tournaments: List["Tournament"] = Relationship(
+    series: List["Series"] = Relationship(back_populates="archer")  # type: ignore
+    tournaments: List["Tournament"] = Relationship(  # type: ignore
         back_populates="archers", link_model=ArcherTournamentLink
     )
 

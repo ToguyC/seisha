@@ -15,10 +15,10 @@ class MatchBase(SQLModel):
 class Match(MatchBase, table=True):
     id: int = Field(default=None, primary_key=True)
 
-    series: List["Series"] = Relationship(back_populates="match")
+    series: List["Series"] = Relationship(back_populates="match")  # type: ignore
 
     tournament_id: int = Field(default=None, foreign_key="tournament.id")
-    tournament: Optional["Tournament"] = Relationship(back_populates="matches")
+    tournament: Optional["Tournament"] = Relationship(back_populates="matches")  # type: ignore
 
 
 class MatchPublic(MatchBase):
