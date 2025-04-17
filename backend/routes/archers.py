@@ -1,11 +1,8 @@
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, func, select
 
 from ..api_models import ArcherInput, PaginatedArcher
-from ..models.archer import Archer
-from ..models.with_relationships import ArcherWithTournaments
+from ..models.models import Archer
 from ..utils.sqlite import get_session
 
 router = APIRouter()

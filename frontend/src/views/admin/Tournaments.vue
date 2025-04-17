@@ -172,20 +172,20 @@ onMounted(() => {
             <div class="flex items-center gap-4">
               <div
                 v-if="tournament.status === 'upcoming'"
-                class="w-4 h-4 bg-orange-400 rounded-full"
+                class="w-2 h-2 bg-orange-400 rounded-full"
               ></div>
               <div
                 v-if="tournament.status === 'live'"
-                class="w-4 h-4 bg-amaranth-500 rounded-full"
+                class="w-2 h-2 bg-amaranth-500 rounded-full"
               ></div>
               <div
                 v-if="tournament.status === 'finished'"
-                class="w-4 h-4 bg-wedgeblue-500 rounded-full"
+                class="w-2 h-2 bg-wedgeblue-500 rounded-full"
               ></div>
-              <div v-if="tournament.status === 'cancelled'" class="w-6 h-6">
+              <div v-if="tournament.status === 'cancelled'" class="w-4 h-4">
                 <PlusIcon class="w-full h-full rotate-45 text-amaranth-500" />
               </div>
-              <div class="uppercase font-semibold">{{ tournament.status }}</div>
+              <div class="uppercase">{{ tournament.status }}</div>
             </div>
           </td>
           <td

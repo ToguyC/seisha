@@ -6,6 +6,7 @@ from .routes.arrows import router as arrows_router
 from .routes.matches import router as matches_router
 from .routes.series import router as series_router
 from .routes.tournaments import router as tournaments_router
+from .routes.teams import router as teams_router
 
 app = FastAPI()
 app.add_middleware(
@@ -21,3 +22,4 @@ app.include_router(tournaments_router)
 app.include_router(matches_router)
 app.include_router(series_router)
 app.include_router(arrows_router)
+app.include_router(teams_router)

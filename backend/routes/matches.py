@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 
-from ..models.match import Match
-from ..models.series import Series
+from ..models.models import Match, Series
 from ..utils.sqlite import get_session
 
 router = APIRouter()

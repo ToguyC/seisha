@@ -80,7 +80,7 @@ onMounted(() => {
     </tbody>
   </table>
 
-  <div class="flex items-center gap-4 mt-10">
+  <div class="flex items-center gap-4 my-10">
     <div v-if="tournament.status === 'upcoming'" class="w-6 h-6 bg-orange-400 rounded-full"></div>
     <div v-if="tournament.status === 'live'" class="w-6 h-6 bg-amaranth-500 rounded-full"></div>
     <div v-if="tournament.status === 'finished'" class="w-6 h-6 bg-wedgeblue-500 rounded-full"></div>
@@ -90,5 +90,8 @@ onMounted(() => {
     <div class="uppercase font-bold text-3xl">{{ tournament.status }}</div>
   </div>
 
+  <div>
+    <div class="text-xl font-bold text-gray-900">Archers</div>
+  </div>
   {{ tournament }}
 </template>

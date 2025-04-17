@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, func, select
 
-from ..api_models import PaginatedTournaments, TournamentInput
-from ..models.tournament import Tournament
-from ..models.with_relationships import TournamentWithArchersAndMatches
+from ..api_models import PaginatedTournaments, TeamInput, TournamentInput
+from ..models.models import Archer, Team, Tournament, TournamentWithEverything
 from ..utils.sqlite import get_session
 
 router = APIRouter()
@@ -38,7 +37,7 @@ def get_tournaments_paginated(
 
 
 @router.get(
-    "/tournaments/{tournament_id}", response_model=TournamentWithArchersAndMatches
+    "/tournaments/{tournament_id}", response_model=TournamentWithEverything
 )
 def get_tournament_by_id(
     tournament_id: int,
@@ -61,6 +60,44 @@ def post_tournament(data: TournamentInput, session: Session = Depends(get_sessio
         status=data.status,
     )
     session.add(tournament)
+    session.commit()
+    session.refresh(tournament)
+    return tournament
+
+
+@router.post("/tournaments/{tournament_id}/archers/{archer_id}")
+def add_archer_to_tournament(
+    tournament_id: int,
+    archer_id: int,
+    session: Session = Depends(get_session),
+):
+    tournament = session.get(Tournament, tournament_id)
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+
+    archer = session.get(Archer, archer_id)
+    if not archer:
+        raise HTTPException(status_code=404, detail="Archer not found")
+
+    tournament.archers.append(archer)
+    session.commit()
+    session.refresh(tournament)
+    return tournament
+
+
+@router.post("/tournaments/{tournament_id}/teams")
+def add_team_to_tournament(
+    data: TeamInput,
+    tournament_id: int,
+    session: Session = Depends(get_session),
+):
+    tournament = session.get(Tournament, tournament_id)
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+
+    team = Team(name=data.name)
+    tournament.teams.append(team)
+    session.add(team)
     session.commit()
     session.refresh(tournament)
     return tournament

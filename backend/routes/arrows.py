@@ -5,9 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 
 from ..api_models import ArrowInput
-from ..models.archer import Archer
-from ..models.match import Match
-from ..models.series import HitEnum, Series
+from ..models.models import Archer, Match, HitEnum, Series
 from ..utils.sqlite import get_session
 
 ARROWS_PER_SERIES = 4
