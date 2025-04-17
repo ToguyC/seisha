@@ -149,7 +149,14 @@ onMounted(() => {
           <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
             {{ tournament.name }}
           </th>
-          <td class="px-6 py-4">{{ tournament.archers.length }}</td>
+          <td class="px-6 py-4">
+            <div v-if="tournament.format === 'individual'">{{ tournament.archers.length }}</div>
+            <div v-else>
+              {{ tournament.teams.length }} ({{
+                tournament.teams.reduce((acc, team) => acc + team.archers.length, 0)
+              }})
+            </div>
+          </td>
           <td class="px-6 py-4">
             {{ new Date(tournament.start_date).toLocaleDateString() }} -
             {{ new Date(tournament.end_date).toLocaleDateString() }}
