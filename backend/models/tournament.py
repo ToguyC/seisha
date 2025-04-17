@@ -9,8 +9,10 @@ from .many_to_many import ArcherTournamentLink, TeamTournamentLink
 
 class TournamentBase(SQLModel):
     name: str
-    date: datetime
+    start_date: datetime
+    end_date: datetime
     format: str
+    status: str = Field(default="upcoming")
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
     updated_at: datetime = Field(
         sa_column=Column(DateTime, default=func.now(), onupdate=func.now())
@@ -29,5 +31,7 @@ class Tournament(TournamentBase, table=True):
 class TournamentPublic(TournamentBase):
     id: int
     name: str
-    date: datetime
+    start_date: datetime
+    end_date: datetime
     format: str
+    status: str

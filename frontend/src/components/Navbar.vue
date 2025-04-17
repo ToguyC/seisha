@@ -40,14 +40,16 @@ watch(
         <Navlink to="/" name="Home" />
 
         <div class="grow"></div>
+        <div v-if="tournamentId">
+          <div class="bg-gray-300 text-gray-900 px-2 rounded-sm">
+            Tournament : {{ tournamentName }}
+          </div>
+        </div>
+        <div class="grow" v-if="tournamentId"></div>
         <div class="flex gap-3">
           <div class="pr-3 border-r border-slate-800 text-slate-800">Admin</div>
           <Navlink to="/admin/archers" name="Archers" />
           <Navlink to="/admin/tournaments" name="Tournaments" />
-
-          <div class="bg-gray-300 text-gray-900 px-2 rounded-sm" v-if="tournamentId">
-            {{ tournamentName }}
-          </div>
         </div>
       </div>
     </div>

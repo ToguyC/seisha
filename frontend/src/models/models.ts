@@ -8,6 +8,9 @@ export type Archer = {
 export type Tournament = {
   id: number
   name: string
-  date: string
+  start_date: string
+  end_date: string
+  format: string
+  status: string
   archers: Archer[]
 }

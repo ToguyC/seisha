@@ -45,7 +45,8 @@ const pagination = ref<{
 
 const showModal = ref(false)
 const newTournamentName = ref('')
-const newTournamentDate = ref('')
+const newTournamentStartDate = ref('')
+const newTournamentEndDate = ref('')
 const newTournamentFormat = ref('')
 
 const fetchPage = (page: number) => {
@@ -59,12 +60,13 @@ const fetchPage = (page: number) => {
     })
 }
 
-const addTournament = (name: string, format: string, date: string) => {
+const addTournament = (name: string, format: string, start_date: string, end_date: string) => {
   api
     .post('/tournaments', {
       name,
       format,
-      date,
+      start_date,
+      end_date,
     })
     .then((res) => {
       showModal.value = false
@@ -128,6 +130,7 @@ onMounted(() => {
           <th class="px-6 py-3">Name</th>
           <th class="px-6 py-3">Participant count</th>
           <th class="px-6 py-3">Date</th>
+          <th class="px-6 py-3">Format</th>
           <th class="px-6 py-3">Status</th>
           <th class="px-6 py-3"></th>
           <th class="px-6 py-3"></th>
@@ -148,9 +151,43 @@ onMounted(() => {
           </th>
           <td class="px-6 py-4">{{ tournament.archers.length }}</td>
           <td class="px-6 py-4">
-            {{ new Date(tournament.date).toLocaleDateString() }}
+            {{ new Date(tournament.start_date).toLocaleDateString() }} -
+            {{ new Date(tournament.end_date).toLocaleDateString() }}
           </td>
-          <td class="px-6 py-4"></td>
+          <td class="px-6 py-4">
+            <div
+              v-if="tournament.format === 'individual'"
+              class="bg-emerald-100 text-emerald-700 font-semibold w-10 rounded-sm flex items-center justify-center"
+            >
+              個人
+            </div>
+            <div
+              v-else
+              class="bg-purple-100 text-purple-700 font-semibold w-12 rounded-sm flex items-center justify-center"
+            >
+              チーム
+            </div>
+          </td>
+          <td class="px-6 py-4">
+            <div class="flex items-center gap-4">
+              <div
+                v-if="tournament.status === 'upcoming'"
+                class="w-4 h-4 bg-orange-400 rounded-full"
+              ></div>
+              <div
+                v-if="tournament.status === 'live'"
+                class="w-4 h-4 bg-amaranth-500 rounded-full"
+              ></div>
+              <div
+                v-if="tournament.status === 'finished'"
+                class="w-4 h-4 bg-wedgeblue-500 rounded-full"
+              ></div>
+              <div v-if="tournament.status === 'cancelled'" class="w-6 h-6">
+                <PlusIcon class="w-full h-full rotate-45 text-amaranth-500" />
+              </div>
+              <div class="uppercase font-semibold">{{ tournament.status }}</div>
+            </div>
+          </td>
           <td
             class="px-6 py-4 text-right w-16 group-hover:bg-white"
             @click="$event.stopPropagation()"
@@ -231,7 +268,7 @@ onMounted(() => {
   <Modal v-model="showModal" title="Add new tournament">
     <form class="w-full flex flex-col items-center gap-5 pb-4 border-b border-gray-200">
       <div class="w-full">
-        <label for="tournament-name" class="block mb-2 text-gray-900">Tournament's name</label>
+        <label for="tournament-name" class="block mb-2 text-gray-900">Name</label>
         <div class="relative">
           <div class="absolute inset-y-0 start-0 flex items-center ps-2.5 pointer-events-none">
             <BookmarkIcon class="w-5 h-5 text-gray-500" />
@@ -247,7 +284,7 @@ onMounted(() => {
       </div>
 
       <div class="w-full">
-        <label for="archer-position" class="block mb-2 text-gray-900">Tournament's format</label>
+        <label for="archer-position" class="block mb-2 text-gray-900">Format</label>
         <select
           id="archer-position"
           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
@@ -259,7 +296,7 @@ onMounted(() => {
       </div>
 
       <div class="w-full">
-        <label for="tournament-date" class="block mb-2 text-gray-900">Tournament date</label>
+        <label for="tournament-date" class="block mb-2 text-gray-900">Start date</label>
         <div class="relative">
           <div class="absolute inset-y-0 start-0 flex items-center ps-2.5 pointer-events-none">
             <CalendarDaysIcon class="w-5 h-5 text-gray-500" />
@@ -268,7 +305,22 @@ onMounted(() => {
             type="date"
             id="tournament-date"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5"
-            v-model="newTournamentDate"
+            v-model="newTournamentStartDate"
+          />
+        </div>
+      </div>
+
+      <div class="w-full">
+        <label for="tournament-date" class="block mb-2 text-gray-900">End date</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 start-0 flex items-center ps-2.5 pointer-events-none">
+            <CalendarDaysIcon class="w-5 h-5 text-gray-500" />
+          </div>
+          <input
+            type="date"
+            id="tournament-date"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5"
+            v-model="newTournamentEndDate"
           />
         </div>
       </div>
@@ -280,7 +332,12 @@ onMounted(() => {
           class="w-1/2 flex items-center text-sm justify-center gap-4 px-4 py-2 text-white bg-blue-700 rounded hover:bg-blue-800 hover:cursor-pointer"
           @click="
             () => {
-              addTournament(newTournamentName, newTournamentFormat, newTournamentDate)
+              addTournament(
+                newTournamentName,
+                newTournamentFormat,
+                newTournamentStartDate,
+                newTournamentEndDate,
+              )
               showModal = false
             }
           "

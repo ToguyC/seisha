@@ -20,7 +20,9 @@ class ArcherInput(BaseModel):
 class TournamentInput(BaseModel):
     name: str
     format: str
-    date: datetime
+    start_date: datetime
+    end_date: datetime
+    status: str = "upcoming"
 
 
 class Paginated(BaseModel):
