@@ -53,7 +53,7 @@ def get_tournament_by_id(
 
 @router.post("/tournaments")
 def post_tournament(data: TournamentInput, session: Session = Depends(get_session)):
-    tournament = Tournament(name=data.name, date=data.date)
+    tournament = Tournament(name=data.name, format=data.format, date=data.date)
     session.add(tournament)
     session.commit()
     session.refresh(tournament)

@@ -19,6 +19,7 @@ class ArcherInput(BaseModel):
 
 class TournamentInput(BaseModel):
     name: str
+    format: str
     date: datetime
 
 

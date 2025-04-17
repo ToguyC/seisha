@@ -4,7 +4,8 @@ from models.archer import Archer
 from models.match import Match
 from models.series import Series
 from models.tournament import Tournament
-from models.many_to_many import ArcherTournamentLink
+from models.team import Team
+from models.many_to_many import ArcherTournamentLink, TeamTournamentLink
 from utils.sqlite import engine
 
 

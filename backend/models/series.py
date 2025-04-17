@@ -27,7 +27,7 @@ class Series(SeriesBase, table=True):
 
     archer_id: int = Field(default=None, foreign_key="archer.id")
     archer: Optional[Archer] = Relationship(back_populates="series")
-    
+
     match_id: int = Field(default=None, foreign_key="match.id")
     match: Optional["Match"] = Relationship(back_populates="series")  # type: ignore
 

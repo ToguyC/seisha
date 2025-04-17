@@ -46,6 +46,7 @@ const pagination = ref<{
 const showModal = ref(false)
 const newTournamentName = ref('')
 const newTournamentDate = ref('')
+const newTournamentFormat = ref('')
 
 const fetchPage = (page: number) => {
   api
@@ -58,10 +59,11 @@ const fetchPage = (page: number) => {
     })
 }
 
-const addTournament = (name: string, date: string) => {
+const addTournament = (name: string, format: string, date: string) => {
   api
     .post('/tournaments', {
       name,
+      format,
       date,
     })
     .then((res) => {
@@ -245,6 +247,18 @@ onMounted(() => {
       </div>
 
       <div class="w-full">
+        <label for="archer-position" class="block mb-2 text-gray-900">Tournament's format</label>
+        <select
+          id="archer-position"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+          v-model="newTournamentFormat"
+        >
+          <option value="individual">Individual</option>
+          <option value="team">Team</option>
+        </select>
+      </div>
+
+      <div class="w-full">
         <label for="tournament-date" class="block mb-2 text-gray-900">Tournament date</label>
         <div class="relative">
           <div class="absolute inset-y-0 start-0 flex items-center ps-2.5 pointer-events-none">
@@ -266,7 +280,7 @@ onMounted(() => {
           class="w-1/2 flex items-center text-sm justify-center gap-4 px-4 py-2 text-white bg-blue-700 rounded hover:bg-blue-800 hover:cursor-pointer"
           @click="
             () => {
-              addTournament(newTournamentName, newTournamentDate)
+              addTournament(newTournamentName, newTournamentFormat, newTournamentDate)
               showModal = false
             }
           "

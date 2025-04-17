@@ -2,14 +2,15 @@ from datetime import datetime
 from typing import List
 
 from sqlalchemy import Column, DateTime, func
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, Enum
 
-from .many_to_many import ArcherTournamentLink
+from .many_to_many import ArcherTournamentLink, TeamTournamentLink
 
 
 class TournamentBase(SQLModel):
     name: str
     date: datetime
+    format: str
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
     updated_at: datetime = Field(
         sa_column=Column(DateTime, default=func.now(), onupdate=func.now())
@@ -29,3 +30,4 @@ class TournamentPublic(TournamentBase):
     id: int
     name: str
     date: datetime
+    format: str

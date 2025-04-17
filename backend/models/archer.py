@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List
 
 from sqlalchemy import Column, DateTime, func
-from sqlmodel import Field, Relationship, SQLModel, Enum
+from sqlmodel import Field, Relationship, SQLModel
 
 from .many_to_many import ArcherTournamentLink
 
