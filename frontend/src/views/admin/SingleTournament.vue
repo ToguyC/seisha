@@ -317,9 +317,25 @@ onMounted(() => {
                 {{ team.name }}
               </td>
 
-              <td class="px-6 py-2 w-4 flex flex-col items-center gap-2 text-gray-900 capitalize">
-                <div v-for="(archer, idx) in team.archers" :key="idx">
+              <td class="px-6 py-2 w-full flex flex-col items-start gap-2 text-gray-900 capitalize">
+                <div
+                  v-for="(archer, idx) in team.archers"
+                  :key="idx"
+                  class="w-full flex items-center justify-between gap-2"
+                >
                   {{ archer.name }}
+                  <div
+                    v-if="archer.position === 'zasha'"
+                    class="bg-blue-100 text-blue-800 text-xs rounded-sm w-10 flex items-center justify-center"
+                  >
+                    坐射
+                  </div>
+                  <div
+                    v-else
+                    class="bg-red-100 text-red-800 text-xs rounded-sm w-10 flex items-center justify-center"
+                  >
+                    立射
+                  </div>
                 </div>
               </td>
               <td
