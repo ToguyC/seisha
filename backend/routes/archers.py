@@ -8,7 +8,7 @@ from ..utils.sqlite import get_session
 router = APIRouter()
 
 
-@router.get("/archers/paginated", response_model=PaginatedArcher)
+@router.get("/archers/paginate", response_model=PaginatedArcher)
 def get_archers_paginated(
     session: Session = Depends(get_session),
     limit: int = Query(10, ge=1, le=100),
@@ -63,6 +63,7 @@ def update_archer(
     archer.position = data.position
     session.commit()
     return archer
+
 
 @router.delete("/archers/{archer_id}")
 def delete_archer(archer_id: int, session: Session = Depends(get_session)):

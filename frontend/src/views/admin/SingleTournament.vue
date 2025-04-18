@@ -1,22 +1,21 @@
 <script setup lang="ts">
 import { getAllArchers } from '@/api/archer'
-import api from '@/api/base'
 import {
-  addArcherToTeam,
   deleteTeam as _deleteTeam,
+  deleteArcherFromTeam,
   getTeam,
+  postArcherToTeam,
   putTeam,
-  removeArcherFromTeam,
 } from '@/api/team'
 import {
-  addTournamentArcher,
-  addTournamentTeam,
+  deleteTournamentArcher,
   getTournament,
-  removeTournamentArcher,
+  postTournamentArcher,
+  postTournamentTeam,
 } from '@/api/tournament'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Modal from '@/components/Modal.vue'
-import type { Archer, Team, Tournament } from '@/models/models'
+import type { Archer, Team, TournamentWithRelations } from '@/models/models'
 import {
   CheckIcon,
   HashtagIcon,
@@ -37,7 +36,7 @@ const searchArcherName = ref('')
 const newTeamName = ref('')
 const editTeamInfo = ref<Team | null>(null)
 const archersList = ref<Archer[]>([])
-const tournament = ref<Tournament>({
+const tournament = ref<TournamentWithRelations>({
   id: 0,
   name: '',
   start_date: '',
@@ -79,7 +78,7 @@ const fetchTournament = (tournamentId: number) => {
 const addArcher = (archerId: number) => {
   if (tournament.value.format === 'team' && showEditTeamModal.value && editTeamInfo.value) {
     const teamId = editTeamInfo.value.id
-    addArcherToTeam(archerId, teamId)
+    postArcherToTeam(archerId, teamId)
       .then(() => {
         fetchTeam(teamId)
         fetchTournament(tournament.value.id)
@@ -90,7 +89,7 @@ const addArcher = (archerId: number) => {
     return
   }
 
-  addTournamentArcher(archerId, tournament.value.id)
+  postTournamentArcher(archerId, tournament.value.id)
     .then(() => {
       fetchTournament(tournament.value.id)
     })
@@ -124,7 +123,7 @@ const editTeam = () => {
 }
 
 const deleteArcher = (archerId: number) => {
-  removeTournamentArcher(archerId, tournament.value.id)
+  deleteTournamentArcher(archerId, tournament.value.id)
     .then(() => {
       fetchTournament(tournament.value.id)
     })
@@ -133,11 +132,11 @@ const deleteArcher = (archerId: number) => {
     })
 }
 
-const deleteArcherFromTeam = (archerId: number) => {
+const removeArcherFromTeam = (archerId: number) => {
   if (!editTeamInfo.value) return
 
   const teamId = editTeamInfo.value.id
-  removeArcherFromTeam(archerId, teamId)
+  deleteArcherFromTeam(archerId, teamId)
     .then(() => {
       fetchTeam(teamId)
       fetchTournament(tournament.value.id)
@@ -422,7 +421,7 @@ onMounted(() => {
           {{ archer.name }}
           <TrashIcon
             class="w-6 h-6 text-red-500 hover:text-red-600 hover:bg-red-100 hover:cursor-pointer rounded-sm p-1"
-            @click="() => deleteArcherFromTeam(archer.id)"
+            @click="() => removeArcherFromTeam(archer.id)"
           />
         </div>
         <div
@@ -482,7 +481,7 @@ onMounted(() => {
           class="w-1/2 flex items-center text-sm justify-center gap-4 px-4 py-2 text-white bg-blue-700 rounded hover:bg-blue-800 hover:cursor-pointer"
           @click="
             () => {
-              addTournamentTeam(tournament.id, newTeamName).then(() => {
+              postTournamentTeam(tournament.id, newTeamName).then(() => {
                 fetchTournament(tournament.id)
                 showAddTeamModal = false
               })

@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import api from '@/api/base'
+import {
+  deleteTournament as _deleteTournament,
+  getPaginatedTournaments,
+  postTournament,
+  putTournament,
+} from '@/api/tournament'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Modal from '@/components/Modal.vue'
-import type { PaginatedResponse, Tournament } from '@/models/models'
+import type { PaginatedResponse, Tournament, TournamentWithRelations } from '@/models/models'
 import router from '@/router'
 import {
   BookmarkIcon,
@@ -26,7 +31,7 @@ const levels = [
   },
 ]
 
-const pagination = ref<PaginatedResponse<Tournament>>({
+const pagination = ref<PaginatedResponse<TournamentWithRelations>>({
   count: 0,
   total: 0,
   page: 1,
@@ -38,23 +43,25 @@ const pagination = ref<PaginatedResponse<Tournament>>({
 const showAddModal = ref(false)
 const showEditModal = ref(false)
 
-const newTournamentInfo = ref({
-  name: '',
-  start_date: '',
-  end_date: '',
-  format: '',
-})
-const editTournamentInfo = ref({
+const newTournamentInfo = ref<Tournament>({
   id: 0,
   name: '',
   start_date: '',
   end_date: '',
   format: '',
+  status: '',
+})
+const editTournamentInfo = ref<Tournament>({
+  id: 0,
+  name: '',
+  start_date: '',
+  end_date: '',
+  format: '',
+  status: '',
 })
 
 const fetchPage = (page: number) => {
-  api
-    .get(`/tournaments/paginated?page=${page}`)
+  getPaginatedTournaments(page)
     .then((res) => {
       pagination.value = res.data
     })
@@ -64,9 +71,8 @@ const fetchPage = (page: number) => {
 }
 
 const addTournament = () => {
-  api
-    .post('/tournaments', newTournamentInfo.value)
-    .then((res) => {
+  postTournament(newTournamentInfo.value)
+    .then(() => {
       showAddModal.value = false
       fetchPage(pagination.value.page)
     })
@@ -75,10 +81,9 @@ const addTournament = () => {
     })
 }
 
-const editTournament = (tournamentId: number) => {
-  api
-    .put(`/tournaments/${tournamentId}`, editTournamentInfo.value)
-    .then((res) => {
+const editTournament = () => {
+  putTournament(editTournamentInfo.value)
+    .then(() => {
       showEditModal.value = false
       fetchPage(pagination.value.page)
     })
@@ -88,9 +93,8 @@ const editTournament = (tournamentId: number) => {
 }
 
 const deleteTournament = (id: number) => {
-  api
-    .delete(`/tournaments/${id}`)
-    .then((res) => {
+  _deleteTournament(id)
+    .then(() => {
       fetchPage(pagination.value.page)
     })
     .catch((err) => {
@@ -221,13 +225,7 @@ onMounted(() => {
                 class="w-6 h-6 hover:text-gray-500 hover:bg-gray-100 rounded-sm p-1"
                 @click="
                   () => {
-                    editTournamentInfo = {
-                      id: tournament.id,
-                      name: tournament.name,
-                      start_date: tournament.start_date,
-                      end_date: tournament.end_date,
-                      format: tournament.format,
-                    }
+                    editTournamentInfo = { ...tournament }
                     showEditModal = true
                   }
                 "
@@ -451,7 +449,7 @@ onMounted(() => {
           class="w-1/2 flex items-center text-sm justify-center gap-4 px-4 py-2 text-white bg-blue-700 rounded hover:bg-blue-800 hover:cursor-pointer"
           @click="
             () => {
-              editTournament(editTournamentInfo.id)
+              editTournament()
               showEditModal = false
             }
           "

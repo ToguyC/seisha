@@ -23,6 +23,9 @@ export type Tournament = {
   end_date: string
   format: string
   status: string
+}
+
+export type TournamentWithRelations = Tournament & {
   archers: Archer[]
   teams: Team[]
   matches: Match[]

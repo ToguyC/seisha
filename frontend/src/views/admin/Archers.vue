@@ -1,17 +1,16 @@
 <script setup lang="ts">
-import api from '@/api/base'
+import { deleteArcher, getPagninatedArchers, postArcher, putArcher } from '@/api/archer'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Modal from '@/components/Modal.vue'
 import type { Archer, PaginatedResponse } from '@/models/models'
 import {
   CheckIcon,
-  EyeIcon,
   HashtagIcon,
   MagnifyingGlassIcon,
   PencilSquareIcon,
   PlusIcon,
   TrashIcon,
-  UserIcon,
+  UserIcon
 } from '@heroicons/vue/16/solid'
 import { onMounted, ref } from 'vue'
 
@@ -42,8 +41,7 @@ const newArcherName = ref('')
 const newArcherPosition = ref('')
 
 const fetchPage = (page: number) => {
-  api
-    .get(`/archers/paginated?page=${page}`)
+  getPagninatedArchers(page)
     .then((res) => {
       pagination.value = res.data
     })
@@ -53,12 +51,8 @@ const fetchPage = (page: number) => {
 }
 
 const addArcher = (name: string, position: string) => {
-  api
-    .post('/archers', {
-      name,
-      position,
-    })
-    .then((res) => {
+  postArcher(name, position)
+    .then(() => {
       showModal.value = false
       newArcherName.value = ''
       newArcherPosition.value = ''
@@ -72,12 +66,8 @@ const addArcher = (name: string, position: string) => {
 const editArcher = () => {
   if (!archerEditInfo.value) return
 
-  api
-    .put(`/archers/${archerEditInfo.value.id}`, {
-      name: archerEditInfo.value.name,
-      position: archerEditInfo.value.position,
-    })
-    .then((res) => {
+  putArcher(archerEditInfo.value)
+    .then(() => {
       showEditModal.value = false
       archerEditInfo.value = null
       fetchPage(pagination.value.page)
@@ -87,10 +77,9 @@ const editArcher = () => {
     })
 }
 
-const deleteArcher = (id: number) => {
-  api
-    .delete(`/archers/${id}`)
-    .then((res) => {
+const dropArcher = (id: number) => {
+  deleteArcher(id)
+    .then(() => {
       fetchPage(pagination.value.page)
     })
     .catch((err) => {
@@ -202,7 +191,7 @@ onMounted(() => {
             <div class="flex items-center justify-end gap-2">
               <TrashIcon
                 class="w-6 h-6 text-red-500 hover:text-red-600 hover:bg-red-100 rounded-sm p-1"
-                @click="() => deleteArcher(archer.id)"
+                @click="() => dropArcher(archer.id)"
               />
             </div>
           </td>
