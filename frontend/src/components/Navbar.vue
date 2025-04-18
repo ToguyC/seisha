@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import { getTournament } from '@/api/tournament'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import Navlink from './Navlink.vue'
-import { computed, ref, watch } from 'vue'
-import api from '@/api/base'
 
 const route = useRoute()
 const tournamentId = computed(() => {
@@ -10,21 +10,17 @@ const tournamentId = computed(() => {
 })
 const tournamentName = ref<string | null>(null)
 
-const getTournament = async (id: string) => {
-  try {
-    const response = await api.get(`/tournaments/${id}`)
-    tournamentName.value = response.data.name
-  } catch (error) {
-    console.error('Error fetching tournament:', error)
-    tournamentName.value = null
-  }
-}
-
 watch(
   tournamentId,
-  (id) => {
+  async (id) => {
     if (id) {
-      getTournament(id)
+      try {
+        const response = await getTournament(Number(id))
+        tournamentName.value = response.data.name
+      } catch (error) {
+        console.error('Error fetching tournament:', error)
+        tournamentName.value = null
+      }
     }
   },
   { immediate: true },
