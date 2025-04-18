@@ -78,7 +78,7 @@ const fetchTournament = (tournamentId: number) => {
 const addArcher = (archerId: number) => {
   if (tournament.value.format === 'team' && showEditTeamModal.value && editTeamInfo.value) {
     const teamId = editTeamInfo.value.id
-    postArcherToTeam(archerId, teamId)
+    postArcherToTeam(teamId, archerId)
       .then(() => {
         fetchTeam(teamId)
         fetchTournament(tournament.value.id)
@@ -89,7 +89,7 @@ const addArcher = (archerId: number) => {
     return
   }
 
-  postTournamentArcher(archerId, tournament.value.id)
+  postTournamentArcher(tournament.value.id, archerId)
     .then(() => {
       fetchTournament(tournament.value.id)
     })
@@ -123,7 +123,7 @@ const editTeam = () => {
 }
 
 const deleteArcher = (archerId: number) => {
-  deleteTournamentArcher(archerId, tournament.value.id)
+  deleteTournamentArcher(tournament.value.id, archerId)
     .then(() => {
       fetchTournament(tournament.value.id)
     })
@@ -136,7 +136,7 @@ const removeArcherFromTeam = (archerId: number) => {
   if (!editTeamInfo.value) return
 
   const teamId = editTeamInfo.value.id
-  deleteArcherFromTeam(archerId, teamId)
+  deleteArcherFromTeam(teamId, archerId)
     .then(() => {
       fetchTeam(teamId)
       fetchTournament(tournament.value.id)

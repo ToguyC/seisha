@@ -136,7 +136,12 @@ def remove_archer_from_tournament(
     if not archer:
         raise HTTPException(status_code=404, detail="Archer not found")
 
-    tournament.archers.remove(archer)
+    try:
+        tournament.archers.remove(archer)
+    except ValueError:
+        raise HTTPException(
+            status_code=404, detail="Archer not found in this tournament"
+        )
     session.commit()
     return {"message": "Archer removed from tournament"}
 
