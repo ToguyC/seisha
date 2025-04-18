@@ -193,10 +193,6 @@ onMounted(() => {
                   }
                 "
               />
-              <EyeIcon
-                class="w-6 h-6 hover:text-gray-500 hover:bg-gray-100 rounded-sm p-1"
-                @click="() => console.log('View icon clicked')"
-              />
             </div>
           </td>
           <td
