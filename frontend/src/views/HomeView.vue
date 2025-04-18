@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { getTournaments } from '@/api/tournament'
 import Match from '@/components/Match.vue'
 import { onMounted } from 'vue'
 
@@ -12,14 +11,7 @@ const data = [
 ]
 
 onMounted(() => {
-  getTournaments()
-    .then((res) => {
-      console.log(res)
-      console.log(import.meta.env.VITE_API_URL)
-    })
-    .catch((err) => {
-      console.error(err.message)
-    })
+
 })
 </script>
 

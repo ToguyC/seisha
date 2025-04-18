@@ -1,5 +1,19 @@
 <script setup lang="ts">
+import { getAllArchers } from '@/api/archer'
 import api from '@/api/base'
+import {
+  addArcherToTeam,
+  deleteTeam as _deleteTeam,
+  getTeam,
+  putTeam,
+  removeArcherFromTeam,
+} from '@/api/team'
+import {
+  addTournamentArcher,
+  addTournamentTeam,
+  getTournament,
+  removeTournamentArcher,
+} from '@/api/tournament'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Modal from '@/components/Modal.vue'
 import type { Archer, Team, Tournament } from '@/models/models'
@@ -21,24 +35,8 @@ const showAddTeamModal = ref(false)
 const showEditTeamModal = ref(false)
 const searchArcherName = ref('')
 const newTeamName = ref('')
-const editTeamInfo = ref<Team>({
-  id: 0,
-  name: '',
-  archers: [],
-})
+const editTeamInfo = ref<Team | null>(null)
 const archersList = ref<Archer[]>([])
-
-const levels = ref([
-  {
-    name: 'Admin',
-    url: '/',
-  },
-  {
-    name: 'Tournaments',
-    url: '/admin/tournaments',
-  },
-])
-
 const tournament = ref<Tournament>({
   id: 0,
   name: '',
@@ -51,9 +49,19 @@ const tournament = ref<Tournament>({
   matches: [],
 })
 
+const levels = ref([
+  {
+    name: 'Admin',
+    url: '/',
+  },
+  {
+    name: 'Tournaments',
+    url: '/admin/tournaments',
+  },
+])
+
 const fetchTournament = (tournamentId: number) => {
-  api
-    .get(`/tournaments/${tournamentId}`)
+  getTournament(tournamentId)
     .then((res) => {
       tournament.value = res.data
 
@@ -69,11 +77,11 @@ const fetchTournament = (tournamentId: number) => {
 }
 
 const addArcher = (archerId: number) => {
-  if (showEditTeamModal.value) {
-    api
-      .post(`/teams/${editTeamInfo.value.id}/archers/${archerId}`)
-      .then((res) => {
-        fetchTeam(editTeamInfo.value.id)
+  if (tournament.value.format === 'team' && showEditTeamModal.value && editTeamInfo.value) {
+    const teamId = editTeamInfo.value.id
+    addArcherToTeam(archerId, teamId)
+      .then(() => {
+        fetchTeam(teamId)
         fetchTournament(tournament.value.id)
       })
       .catch((err) => {
@@ -82,22 +90,8 @@ const addArcher = (archerId: number) => {
     return
   }
 
-  api
-    .post(`/tournaments/${tournament.value.id}/archers/${archerId}`)
-    .then((res) => {
-      fetchTournament(tournament.value.id)
-    })
-    .catch((err) => {
-      console.error(err.message)
-    })
-}
-
-const addTeam = () => {
-  api
-    .post(`/tournaments/${tournament.value.id}/teams/`, {
-      name: newTeamName.value,
-    })
-    .then((res) => {
+  addTournamentArcher(archerId, tournament.value.id)
+    .then(() => {
       fetchTournament(tournament.value.id)
     })
     .catch((err) => {
@@ -106,8 +100,7 @@ const addTeam = () => {
 }
 
 const fetchTeam = (teamId: number) => {
-  api
-    .get(`/teams/${teamId}`)
+  getTeam(teamId)
     .then((res) => {
       editTeamInfo.value = res.data
       showEditTeamModal.value = true
@@ -118,11 +111,10 @@ const fetchTeam = (teamId: number) => {
 }
 
 const editTeam = () => {
-  api
-    .put(`/teams/${editTeamInfo.value.id}`, {
-      name: editTeamInfo.value.name,
-    })
-    .then((res) => {
+  if (!editTeamInfo.value) return
+
+  putTeam(editTeamInfo.value)
+    .then(() => {
       fetchTournament(tournament.value.id)
       showEditTeamModal.value = false
     })
@@ -132,9 +124,8 @@ const editTeam = () => {
 }
 
 const deleteArcher = (archerId: number) => {
-  api
-    .delete(`/tournaments/${tournament.value.id}/archers/${archerId}`)
-    .then((res) => {
+  removeTournamentArcher(archerId, tournament.value.id)
+    .then(() => {
       fetchTournament(tournament.value.id)
     })
     .catch((err) => {
@@ -143,10 +134,12 @@ const deleteArcher = (archerId: number) => {
 }
 
 const deleteArcherFromTeam = (archerId: number) => {
-  api
-    .delete(`/teams/${editTeamInfo.value.id}/archers/${archerId}`)
-    .then((res) => {
-      fetchTeam(editTeamInfo.value.id)
+  if (!editTeamInfo.value) return
+
+  const teamId = editTeamInfo.value.id
+  removeArcherFromTeam(archerId, teamId)
+    .then(() => {
+      fetchTeam(teamId)
       fetchTournament(tournament.value.id)
     })
     .catch((err) => {
@@ -155,9 +148,8 @@ const deleteArcherFromTeam = (archerId: number) => {
 }
 
 const deleteTeam = (teamId: number) => {
-  api
-    .delete(`/teams/${teamId}`)
-    .then((res) => {
+  _deleteTeam(teamId)
+    .then(() => {
       fetchTournament(tournament.value.id)
     })
     .catch((err) => {
@@ -181,8 +173,7 @@ const archerInTournament = (archerId: number) => {
 }
 
 const fetchParticipant = () => {
-  api
-    .get('/archers')
+  getAllArchers()
     .then((res) => {
       archersList.value = res.data
     })
@@ -397,7 +388,6 @@ onMounted(() => {
         <div class="text-xl font-bold text-gray-900 capitalize">Matches</div>
         <button
           class="w-1/4 flex items-center text-sm justify-center gap-4 px-4 py-2 text-white bg-blue-700 rounded hover:bg-blue-800 hover:cursor-pointer"
-          @click="tournament.format === 'team' ? addTeam() : addArcher(1)"
         >
           <PlusIcon class="w-6 h-6" /> Add new match
         </button>
@@ -405,7 +395,7 @@ onMounted(() => {
     </div>
   </div>
 
-  <Modal v-model="showEditTeamModal" title="Edit a team">
+  <Modal v-model="showEditTeamModal" title="Edit a team" v-if="editTeamInfo">
     <form class="w-full flex flex-col items-center gap-5 pb-4 border-b border-gray-200">
       <div class="w-full flex flex-col gap-2">
         <div class="w-full flex items-center justify-between gap-2">
@@ -492,8 +482,10 @@ onMounted(() => {
           class="w-1/2 flex items-center text-sm justify-center gap-4 px-4 py-2 text-white bg-blue-700 rounded hover:bg-blue-800 hover:cursor-pointer"
           @click="
             () => {
-              addTeam()
-              showAddTeamModal = false
+              addTournamentTeam(tournament.id, newTeamName).then(() => {
+                fetchTournament(tournament.id)
+                showAddTeamModal = false
+              })
             }
           "
         >
