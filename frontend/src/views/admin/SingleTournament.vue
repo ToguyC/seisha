@@ -64,7 +64,11 @@ onMounted(() => {
 <template>
   <Breadcrumb :levels="levels"></Breadcrumb>
 
-  <SingleTournamentHeader :tournament="tournament" class="my-10" />
+  <SingleTournamentHeader
+    :tournament="tournament"
+    class="my-10"
+    @fetch-tournament="fetchTournament"
+  />
 
   <div class="w-full h-1 border-b border-gray-200"></div>
 
