@@ -34,3 +34,17 @@ def add_archer_to_team(
     team.archers.append(archer)
     session.commit()
     return team
+
+
+@router.delete("/teams/{team_id}")
+def remove_team_from_tournament(
+    team_id: int,
+    session: Session = Depends(get_session),
+):
+    team = session.get(Team, team_id)
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    session.delete(team)
+    session.commit()
+    return {"message": "Team removed"}

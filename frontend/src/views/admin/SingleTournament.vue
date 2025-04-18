@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import api from '@/api/base'
 import type { Tournament } from '@/models/models'
 import Breadcrumb from '@/components/Breadcrumb.vue'
-import { HashtagIcon, PlusIcon } from '@heroicons/vue/16/solid'
+import { HashtagIcon, PlusIcon, TrashIcon } from '@heroicons/vue/16/solid'
 
 const route = useRoute()
 
@@ -31,21 +31,77 @@ const tournament = ref<Tournament>({
   matches: [],
 })
 
-onMounted(() => {
-  const tournamentId = route.params.id
-
+const fetchTournament = (tournamentId: number) => {
   api
     .get(`/tournaments/${tournamentId}`)
     .then((res) => {
       tournament.value = res.data
+
+      levels.value = levels.value.filter((level) => level.name !== tournament.value.name)
       levels.value.push({
-        name: res.data.name,
-        url: `/admin/tournaments/${res.data.id}`,
+        name: tournament.value.name,
+        url: `/admin/tournaments/${tournamentId}`,
       })
     })
     .catch((err) => {
       console.error(err.message)
     })
+}
+
+const addArcher = (archerId: number) => {
+  api
+    .post(`/tournaments/${tournament.value.id}/archers/${archerId}`)
+    .then((res) => {
+      fetchTournament(tournament.value.id)
+    })
+    .catch((err) => {
+      console.error(err.message)
+    })
+}
+
+const addTeam = () => {
+  api
+    .post(`/tournaments/${tournament.value.id}/teams/`, {
+      name: 'New Team',
+    })
+    .then((res) => {
+      fetchTournament(tournament.value.id)
+    })
+    .catch((err) => {
+      console.error(err.message)
+    })
+}
+
+const deleteArcher = (archerId: number) => {
+  api
+    .delete(`/tournaments/${tournament.value.id}/archers/${archerId}`)
+    .then((res) => {
+      fetchTournament(tournament.value.id)
+    })
+    .catch((err) => {
+      console.error(err.message)
+    })
+}
+
+const deleteTeam = (teamId: number) => {
+  api
+    .delete(`/teams/${teamId}`)
+    .then((res) => {
+      fetchTournament(tournament.value.id)
+    })
+    .catch((err) => {
+      console.error(err.message)
+    })
+}
+
+onMounted(() => {
+  const tournamentId = route.params.id
+
+  if (tournamentId) {
+    fetchTournament(Number(tournamentId))
+  } else {
+    console.error('Tournament ID is required')
+  }
 })
 </script>
 
@@ -90,7 +146,8 @@ onMounted(() => {
             v-else-if="tournament.status === 'live'"
             class="bg-amaranth-500 text-white font-semibold w-20 rounded-sm flex items-center justify-center gap-2"
           >
-            <div class="w-2 h-2 rounded-full bg-white"></div> 開催中
+            <div class="w-2 h-2 rounded-full bg-white"></div>
+            開催中
           </div>
           <div
             v-else-if="tournament.status === 'finished'"
@@ -113,15 +170,25 @@ onMounted(() => {
 
   <div class="flex flex-col gap-4">
     <div class="w-1/2">
-      <div class="text-xl font-bold text-gray-900 capitalize mb-6">{{ tournament.format }}</div>
+      <div class="flex items-center justify-between mb-6">
+        <div class="text-xl font-bold text-gray-900 capitalize">{{ tournament.format }}</div>
+        <button
+          class="w-1/4 flex items-center text-sm justify-center gap-4 px-4 py-2 text-white bg-blue-700 rounded hover:bg-blue-800 hover:cursor-pointer"
+          @click="tournament.format === 'team' ? addTeam() : addArcher(1)"
+        >
+          <PlusIcon class="w-6 h-6" /> Add new
+          {{ tournament.format === 'team' ? 'team' : 'archer' }}
+        </button>
+      </div>
 
-      <div v-if="tournament.format === 'teams'" class="flex w-full items-center gap-6">
+      <div v-if="tournament.format === 'team'" class="flex w-full items-center gap-6">
         <table class="w-full text-sm text-left rtl:text-right text-gray-500">
           <thead class="text-xs text-gray-500 uppercase bg-gray-50">
             <tr class="font-bold">
               <td class="px-6 py-3"><HashtagIcon class="w-4 h-4" /></td>
               <td class="px-6 py-3">Name</td>
               <td class="px-6 py-3">Archers</td>
+              <td class="px-6 py-3"></td>
             </tr>
           </thead>
           <tbody>
@@ -130,12 +197,27 @@ onMounted(() => {
               :key="index"
               class="bg-white border-b border-gray-200 hover:bg-gray-50 hover:cursor-pointer group"
             >
-              <td class="px-6 py-4 w-4 text-gray-900 whitespace-nowrap font-semibold">{{ team.id }}</td>
-              <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ team.name }}</td>
+              <td class="px-6 py-4 w-4 text-gray-900 whitespace-nowrap font-semibold">
+                {{ team.id }}
+              </td>
+              <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                {{ team.name }}
+              </td>
 
               <td class="px-6 py-4 w-4 flex flex-col items-center gap-2 text-gray-900 capitalize">
                 <div v-for="(archer, idx) in team.archers" :key="idx">
                   {{ archer.name }}
+                </div>
+              </td>
+              <td
+                class="px-6 py-4 text-right w-10 border-l border-gray-200 group-hover:bg-white"
+                @click="$event.stopPropagation()"
+              >
+                <div class="flex items-center justify-end gap-2">
+                  <TrashIcon
+                    class="w-6 h-6 text-red-500 hover:text-red-600 hover:bg-red-100 rounded-sm p-1"
+                    @click="() => deleteTeam(team.id)"
+                  />
                 </div>
               </td>
             </tr>
@@ -149,6 +231,7 @@ onMounted(() => {
             <tr class="font-bold">
               <td class="px-6 py-3"><HashtagIcon class="w-4 h-4" /></td>
               <td class="px-6 py-3">Name</td>
+              <td class="px-6 py-3"></td>
             </tr>
           </thead>
           <tbody>
@@ -157,8 +240,23 @@ onMounted(() => {
               :key="index"
               class="bg-white border-b border-gray-200 hover:bg-gray-50 hover:cursor-pointer group"
             >
-              <td class="px-6 py-4 w-4 text-gray-900 whitespace-nowrap font-semibold">{{ archer.id }}</td>
-              <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ archer.name }}</td>
+              <td class="px-6 py-4 w-4 text-gray-900 whitespace-nowrap font-semibold">
+                {{ archer.id }}
+              </td>
+              <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                {{ archer.name }}
+              </td>
+              <td
+                class="px-6 py-4 text-right w-10 border-l border-gray-200 group-hover:bg-white"
+                @click="$event.stopPropagation()"
+              >
+                <div class="flex items-center justify-end gap-2">
+                  <TrashIcon
+                    class="w-6 h-6 text-red-500 hover:text-red-600 hover:bg-red-100 rounded-sm p-1"
+                    @click="() => deleteArcher(archer.id)"
+                  />
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
