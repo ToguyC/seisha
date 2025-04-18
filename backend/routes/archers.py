@@ -49,6 +49,21 @@ def post_archer(data: ArcherInput, session: Session = Depends(get_session)):
     return archer
 
 
+@router.put("/archers/{archer_id}", response_model=Archer)
+def update_archer(
+    archer_id: int,
+    data: ArcherInput,
+    session: Session = Depends(get_session),
+):
+    archer = session.get(Archer, archer_id)
+    if not archer:
+        raise HTTPException(status_code=404, detail="Archer not found")
+
+    archer.name = data.name
+    archer.position = data.position
+    session.commit()
+    return archer
+
 @router.delete("/archers/{archer_id}")
 def delete_archer(archer_id: int, session: Session = Depends(get_session)):
     archer = session.get(Archer, archer_id)

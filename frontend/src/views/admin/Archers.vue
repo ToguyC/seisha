@@ -4,6 +4,7 @@ import Breadcrumb from '@/components/Breadcrumb.vue'
 import Modal from '@/components/Modal.vue'
 import type { Archer, PaginatedResponse } from '@/models/models'
 import {
+  CheckIcon,
   EyeIcon,
   HashtagIcon,
   MagnifyingGlassIcon,
@@ -35,6 +36,8 @@ const pagination = ref<PaginatedResponse<Archer>>({
 })
 
 const showModal = ref(false)
+const showEditModal = ref(false)
+const archerEditInfo = ref<Archer | null>(null)
 const newArcherName = ref('')
 const newArcherPosition = ref('')
 
@@ -57,6 +60,26 @@ const addArcher = (name: string, position: string) => {
     })
     .then((res) => {
       showModal.value = false
+      newArcherName.value = ''
+      newArcherPosition.value = ''
+      fetchPage(pagination.value.page)
+    })
+    .catch((err) => {
+      console.error(err.message)
+    })
+}
+
+const editArcher = () => {
+  if (!archerEditInfo.value) return
+
+  api
+    .put(`/archers/${archerEditInfo.value.id}`, {
+      name: archerEditInfo.value.name,
+      position: archerEditInfo.value.position,
+    })
+    .then((res) => {
+      showEditModal.value = false
+      archerEditInfo.value = null
       fetchPage(pagination.value.page)
     })
     .catch((err) => {
@@ -134,7 +157,6 @@ onMounted(() => {
           class="bg-white border-b border-gray-200 hover:bg-gray-50 hover:cursor-pointer group"
           v-for="(archer, index) in pagination.data"
           :key="index"
-          @click="() => console.log('Row clicked')"
         >
           <td class="px-6 py-4 w-4 text-gray-900 whitespace-nowrap font-semibold">
             {{ archer.id }}
@@ -164,7 +186,12 @@ onMounted(() => {
             <div class="flex items-center justify-end gap-2">
               <PencilSquareIcon
                 class="w-6 h-6 hover:text-gray-500 hover:bg-gray-100 rounded-sm p-1"
-                @click="() => console.log('Edit icon clicked')"
+                @click="
+                  () => {
+                    archerEditInfo = { ...archer }
+                    showEditModal = true
+                  }
+                "
               />
               <EyeIcon
                 class="w-6 h-6 hover:text-gray-500 hover:bg-gray-100 rounded-sm p-1"
@@ -285,6 +312,63 @@ onMounted(() => {
         <button
           class="w-1/2 px-4 py-2 mr-2 text-sm text-gray-900 bg-white border border-gray-200 rounded hover:bg-gray-100 hover:cursor-pointer hover:text-blue-700"
           @click="showModal = false"
+        >
+          Discard
+        </button>
+      </div>
+    </template>
+  </Modal>
+
+  <Modal v-model="showEditModal" title="Edit archer">
+    <form
+      class="w-full flex flex-col items-center gap-5 pb-4 border-b border-gray-200"
+      v-if="archerEditInfo"
+    >
+      <div class="w-full">
+        <label for="archer-name" class="block mb-2 text-gray-900">Archer's name</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 start-0 flex items-center ps-2.5 pointer-events-none">
+            <UserIcon class="w-5 h-5 text-gray-500" />
+          </div>
+          <input
+            type="text"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5"
+            placeholder="Archer's name"
+            id="archer-name"
+            v-model="archerEditInfo.name"
+          />
+        </div>
+      </div>
+
+      <div class="w-full">
+        <label for="archer-position" class="block mb-2 text-gray-900">Archer's position</label>
+        <select
+          id="archer-position"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+          v-model="archerEditInfo.position"
+        >
+          <option value="zasha">坐射 (Zasha)</option>
+          <option value="rissha">立射 (Rissha)</option>
+        </select>
+      </div>
+    </form>
+
+    <template #footer>
+      <div class="wf-full flex justify-between items-center gap-4">
+        <button
+          class="w-1/2 text-sm flex items-center justify-center gap-4 px-4 py-2 text-white bg-blue-700 rounded hover:bg-blue-800 hover:cursor-pointer"
+          @click="
+            () => {
+              editArcher()
+              showEditModal = false
+            }
+          "
+        >
+          <CheckIcon class="w-6 h-6" /> Edit archer
+        </button>
+        <button
+          class="w-1/2 px-4 py-2 mr-2 text-sm text-gray-900 bg-white border border-gray-200 rounded hover:bg-gray-100 hover:cursor-pointer hover:text-blue-700"
+          @click="showEditModal = false"
         >
           Discard
         </button>
