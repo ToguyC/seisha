@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, func, select
 
-from ..api_models import ArcherInput, PaginatedArcher
+from ..api_models import ArcherInput, PaginatedArcher, ArcherSearchInput
 from ..models.models import Archer
 from ..utils.sqlite import get_session
 
 router = APIRouter()
 
 
-@router.get("/archers", response_model=PaginatedArcher)
+@router.get("/archers/paginated", response_model=PaginatedArcher)
 def get_archers_paginated(
     session: Session = Depends(get_session),
     limit: int = Query(10, ge=1, le=100),
@@ -32,6 +32,12 @@ def get_archers_paginated(
         limit=limit,
         data=archers,
     )
+
+
+@router.get("/archers", response_model=list[Archer])
+def get_archers(session: Session = Depends(get_session)):
+    archers = session.exec(select(Archer)).all()
+    return archers
 
 
 @router.post("/archers", response_model=Archer)

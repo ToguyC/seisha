@@ -43,3 +43,8 @@ class PaginatedTournaments(Paginated):
 
 class PaginatedArcher(Paginated):
     data: List[ArcherWithTournaments]
+
+
+class ArcherSearchInput(BaseModel):
+    name: str = ""
+    position: str = "zasha"

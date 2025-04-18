@@ -2,7 +2,7 @@
 import api from '@/api/base'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Modal from '@/components/Modal.vue'
-import type { Archer } from '@/models/models'
+import type { Archer, PaginatedResponse } from '@/models/models'
 import {
   EyeIcon,
   HashtagIcon,
@@ -25,14 +25,7 @@ const levels = [
   },
 ]
 
-const pagination = ref<{
-  count: number
-  total: number
-  page: number
-  total_pages: number
-  limit: number
-  data: Archer[]
-}>({
+const pagination = ref<PaginatedResponse<Archer>>({
   count: 0,
   total: 0,
   page: 1,
@@ -47,7 +40,7 @@ const newArcherPosition = ref('')
 
 const fetchPage = (page: number) => {
   api
-    .get(`/archers?page=${page}`)
+    .get(`/archers/paginated?page=${page}`)
     .then((res) => {
       pagination.value = res.data
     })

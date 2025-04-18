@@ -2,7 +2,7 @@
 import api from '@/api/base'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Modal from '@/components/Modal.vue'
-import type { Tournament } from '@/models/models'
+import type { PaginatedResponse, Tournament } from '@/models/models'
 import router from '@/router'
 import {
   BookmarkIcon,
@@ -26,14 +26,7 @@ const levels = [
   },
 ]
 
-const pagination = ref<{
-  count: number
-  total: number
-  page: number
-  total_pages: number
-  limit: number
-  data: Tournament[]
-}>({
+const pagination = ref<PaginatedResponse<Tournament>>({
   count: 0,
   total: 0,
   page: 1,
@@ -61,7 +54,7 @@ const editTournamentInfo = ref({
 
 const fetchPage = (page: number) => {
   api
-    .get(`/tournaments?page=${page}`)
+    .get(`/tournaments/paginated?page=${page}`)
     .then((res) => {
       pagination.value = res.data
     })
@@ -226,16 +219,18 @@ onMounted(() => {
             <div class="flex items-center justify-end gap-2">
               <PencilSquareIcon
                 class="w-6 h-6 hover:text-gray-500 hover:bg-gray-100 rounded-sm p-1"
-                @click="() => {
-                  editTournamentInfo = {
-                    id: tournament.id,
-                    name: tournament.name,
-                    start_date: tournament.start_date,
-                    end_date: tournament.end_date,
-                    format: tournament.format,
+                @click="
+                  () => {
+                    editTournamentInfo = {
+                      id: tournament.id,
+                      name: tournament.name,
+                      start_date: tournament.start_date,
+                      end_date: tournament.end_date,
+                      format: tournament.format,
+                    }
+                    showEditModal = true
                   }
-                  showEditModal = true
-                }"
+                "
               />
             </div>
           </td>

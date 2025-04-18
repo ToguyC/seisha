@@ -192,3 +192,6 @@ class TournamentWithEverything(TournamentPublic):
 
 class ArcherWithTournaments(ArcherPublic):
     tournaments: List[TournamentPublic] = []
+
+class TeamWithArchers(TeamPublic):
+    archers: List[ArcherPublic] = []

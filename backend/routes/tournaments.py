@@ -8,7 +8,7 @@ from ..utils.sqlite import get_session
 router = APIRouter()
 
 
-@router.get("/tournaments", response_model=PaginatedTournaments)
+@router.get("/tournaments/paginated", response_model=PaginatedTournaments)
 def get_tournaments_paginated(
     session: Session = Depends(get_session),
     limit: int = Query(10, ge=1, le=100),
