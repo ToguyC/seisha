@@ -8,13 +8,7 @@ import {
 } from '@/api/team'
 import { postTournamentTeam } from '@/api/tournament'
 import type { Team, TournamentWithRelations } from '@/models/models'
-import {
-  CheckIcon,
-  HashtagIcon,
-  PlusIcon,
-  TrashIcon,
-  UserGroupIcon
-} from '@heroicons/vue/16/solid'
+import { CheckIcon, HashtagIcon, PlusIcon, TrashIcon, UserGroupIcon } from '@heroicons/vue/16/solid'
 import { ref, useTemplateRef } from 'vue'
 import Modal from '../Modal.vue'
 import ArchersModal from './ArchersModal.vue'
@@ -43,6 +37,20 @@ const fetchTeam = (teamId: number) => {
     .then((res) => {
       editTeamInfo.value = res.data
       showEditTeamModal.value = true
+    })
+    .catch((err) => {
+      console.error(err.message)
+    })
+}
+
+const addTeam = () => {
+  if (!newTeamName.value) return
+
+  postTournamentTeam(tournament.id, newTeamName.value)
+    .then(() => {
+      emit('fetchTournament', tournament.id)
+      showAddTeamModal.value = false
+      newTeamName.value = ''
     })
     .catch((err) => {
       console.error(err.message)
@@ -201,14 +209,7 @@ const removeArcherFromTeam = (archerId: number) => {
         <div class="wf-full flex justify-between items-center gap-4">
           <button
             class="w-1/2 flex items-center text-sm justify-center gap-4 px-4 py-2 text-white bg-blue-700 rounded hover:bg-blue-800 hover:cursor-pointer"
-            @click="
-              () => {
-                postTournamentTeam(tournament.id, newTeamName).then(() => {
-                  emit('fetchTournament', tournament.id)
-                  showAddTeamModal = false
-                })
-              }
-            "
+            @click="addTeam()"
           >
             <PlusIcon class="w-6 h-6" /> Register team
           </button>

@@ -99,6 +99,7 @@ defineExpose({
                     if (archerInTournament(archer.id)) return
 
                     emit('addArcher', archer.id)
+                    searchArcherName = ''
                     showModal = false
                   }
                 "
