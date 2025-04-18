@@ -7,7 +7,6 @@ import router from '@/router'
 import {
   BookmarkIcon,
   CalendarDaysIcon,
-  EyeIcon,
   HashtagIcon,
   MagnifyingGlassIcon,
   PencilSquareIcon,
@@ -43,11 +42,22 @@ const pagination = ref<{
   data: [],
 })
 
-const showModal = ref(false)
-const newTournamentName = ref('')
-const newTournamentStartDate = ref('')
-const newTournamentEndDate = ref('')
-const newTournamentFormat = ref('')
+const showAddModal = ref(false)
+const showEditModal = ref(false)
+
+const newTournamentInfo = ref({
+  name: '',
+  start_date: '',
+  end_date: '',
+  format: '',
+})
+const editTournamentInfo = ref({
+  id: 0,
+  name: '',
+  start_date: '',
+  end_date: '',
+  format: '',
+})
 
 const fetchPage = (page: number) => {
   api
@@ -60,16 +70,23 @@ const fetchPage = (page: number) => {
     })
 }
 
-const addTournament = (name: string, format: string, start_date: string, end_date: string) => {
+const addTournament = () => {
   api
-    .post('/tournaments', {
-      name,
-      format,
-      start_date,
-      end_date,
-    })
+    .post('/tournaments', newTournamentInfo.value)
     .then((res) => {
-      showModal.value = false
+      showAddModal.value = false
+      fetchPage(pagination.value.page)
+    })
+    .catch((err) => {
+      console.error(err.message)
+    })
+}
+
+const editTournament = (tournamentId: number) => {
+  api
+    .put(`/tournaments/${tournamentId}`, editTournamentInfo.value)
+    .then((res) => {
+      showEditModal.value = false
       fetchPage(pagination.value.page)
     })
     .catch((err) => {
@@ -103,7 +120,7 @@ onMounted(() => {
 
     <button
       class="flex items-center gap-2 text-white bg-blue-700 hover:cursor-pointer hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5"
-      @click="showModal = true"
+      @click="showAddModal = true"
     >
       <PlusIcon class="w-6 h-6" /> Add new tournament
     </button>
@@ -201,24 +218,6 @@ onMounted(() => {
             >
               中止
             </div>
-            <!-- <div class="flex items-center gap-4">
-              <div
-                v-if="tournament.status === 'upcoming'"
-                class="w-2 h-2 bg-orange-400 rounded-full"
-              ></div>
-              <div
-                v-if="tournament.status === 'live'"
-                class="w-2 h-2 bg-amaranth-500 rounded-full"
-              ></div>
-              <div
-                v-if="tournament.status === 'finished'"
-                class="w-2 h-2 bg-wedgeblue-500 rounded-full"
-              ></div>
-              <div v-if="tournament.status === 'cancelled'" class="w-4 h-4">
-                <PlusIcon class="w-full h-full rotate-45 text-amaranth-500" />
-              </div>
-              <div class="uppercase">{{ tournament.status }}</div>
-            </div> -->
           </td>
           <td
             class="px-6 py-4 text-right w-16 group-hover:bg-white"
@@ -227,7 +226,16 @@ onMounted(() => {
             <div class="flex items-center justify-end gap-2">
               <PencilSquareIcon
                 class="w-6 h-6 hover:text-gray-500 hover:bg-gray-100 rounded-sm p-1"
-                @click="() => console.log('Edit icon clicked')"
+                @click="() => {
+                  editTournamentInfo = {
+                    id: tournament.id,
+                    name: tournament.name,
+                    start_date: tournament.start_date,
+                    end_date: tournament.end_date,
+                    format: tournament.format,
+                  }
+                  showEditModal = true
+                }"
               />
             </div>
           </td>
@@ -297,7 +305,7 @@ onMounted(() => {
     </nav>
   </div>
 
-  <Modal v-model="showModal" title="Add new tournament">
+  <Modal v-model="showAddModal" title="Add new tournament">
     <form class="w-full flex flex-col items-center gap-5 pb-4 border-b border-gray-200">
       <div class="w-full">
         <label for="tournament-name" class="block mb-2 text-gray-900">Name</label>
@@ -310,7 +318,7 @@ onMounted(() => {
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5"
             placeholder="Tournament's name"
             id="tournament-name"
-            v-model="newTournamentName"
+            v-model="newTournamentInfo.name"
           />
         </div>
       </div>
@@ -320,7 +328,7 @@ onMounted(() => {
         <select
           id="archer-position"
           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-          v-model="newTournamentFormat"
+          v-model="newTournamentInfo.format"
         >
           <option value="individual">Individual</option>
           <option value="team">Team</option>
@@ -337,7 +345,7 @@ onMounted(() => {
             type="date"
             id="tournament-date"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5"
-            v-model="newTournamentStartDate"
+            v-model="newTournamentInfo.start_date"
           />
         </div>
       </div>
@@ -352,7 +360,7 @@ onMounted(() => {
             type="date"
             id="tournament-date"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5"
-            v-model="newTournamentEndDate"
+            v-model="newTournamentInfo.end_date"
           />
         </div>
       </div>
@@ -364,13 +372,8 @@ onMounted(() => {
           class="w-1/2 flex items-center text-sm justify-center gap-4 px-4 py-2 text-white bg-blue-700 rounded hover:bg-blue-800 hover:cursor-pointer"
           @click="
             () => {
-              addTournament(
-                newTournamentName,
-                newTournamentFormat,
-                newTournamentStartDate,
-                newTournamentEndDate,
-              )
-              showModal = false
+              addTournament()
+              showAddModal = false
             }
           "
         >
@@ -378,7 +381,91 @@ onMounted(() => {
         </button>
         <button
           class="w-1/2 px-4 py-2 mr-2 text-sm text-gray-900 bg-white border border-gray-200 rounded hover:bg-gray-100 hover:cursor-pointer hover:text-blue-700"
-          @click="showModal = false"
+          @click="showAddModal = false"
+        >
+          Discard
+        </button>
+      </div>
+    </template>
+  </Modal>
+
+  <Modal v-model="showEditModal" title="Edit tournament">
+    <form class="w-full flex flex-col items-center gap-5 pb-4 border-b border-gray-200">
+      <div class="w-full">
+        <label for="tournament-name" class="block mb-2 text-gray-900">Name</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 start-0 flex items-center ps-2.5 pointer-events-none">
+            <BookmarkIcon class="w-5 h-5 text-gray-500" />
+          </div>
+          <input
+            type="text"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5"
+            placeholder="Tournament's name"
+            id="tournament-name"
+            v-model="editTournamentInfo.name"
+          />
+        </div>
+      </div>
+
+      <div class="w-full">
+        <label for="archer-position" class="block mb-2 text-gray-900">Format</label>
+        <select
+          id="archer-position"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+          v-model="editTournamentInfo.format"
+        >
+          <option value="individual">Individual</option>
+          <option value="team">Team</option>
+        </select>
+      </div>
+
+      <div class="w-full">
+        <label for="tournament-date" class="block mb-2 text-gray-900">Start date</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 start-0 flex items-center ps-2.5 pointer-events-none">
+            <CalendarDaysIcon class="w-5 h-5 text-gray-500" />
+          </div>
+          <input
+            type="date"
+            id="tournament-date"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5"
+            v-model="editTournamentInfo.start_date"
+          />
+        </div>
+      </div>
+
+      <div class="w-full">
+        <label for="tournament-date" class="block mb-2 text-gray-900">End date</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 start-0 flex items-center ps-2.5 pointer-events-none">
+            <CalendarDaysIcon class="w-5 h-5 text-gray-500" />
+          </div>
+          <input
+            type="date"
+            id="tournament-date"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5"
+            v-model="editTournamentInfo.end_date"
+          />
+        </div>
+      </div>
+    </form>
+
+    <template #footer>
+      <div class="wf-full flex justify-between items-center gap-4">
+        <button
+          class="w-1/2 flex items-center text-sm justify-center gap-4 px-4 py-2 text-white bg-blue-700 rounded hover:bg-blue-800 hover:cursor-pointer"
+          @click="
+            () => {
+              editTournament(editTournamentInfo.id)
+              showEditModal = false
+            }
+          "
+        >
+          <PlusIcon class="w-6 h-6" /> Add new tournament
+        </button>
+        <button
+          class="w-1/2 px-4 py-2 mr-2 text-sm text-gray-900 bg-white border border-gray-200 rounded hover:bg-gray-100 hover:cursor-pointer hover:text-blue-700"
+          @click="showEditModal = false"
         >
           Discard
         </button>
