@@ -147,13 +147,13 @@ onMounted(() => {
           v-for="(archer, index) in pagination.data"
           :key="index"
         >
-          <td class="px-6 py-4 w-4 text-gray-900 whitespace-nowrap font-semibold">
+          <td class="px-6 py-2 w-4 text-gray-900 whitespace-nowrap font-semibold">
             {{ archer.id }}
           </td>
           <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
             {{ archer.name }}
           </th>
-          <td class="px-6 py-4">
+          <td class="px-6 py-2">
             <div
               v-if="archer.position === 'zasha'"
               class="bg-blue-100 text-blue-800 text-xs rounded-sm w-10 flex items-center justify-center"
@@ -167,9 +167,9 @@ onMounted(() => {
               立射
             </div>
           </td>
-          <td class="px-6 py-4">{{ archer.accuracy }} %</td>
+          <td class="px-6 py-2">{{ archer.accuracy }} %</td>
           <td
-            class="px-6 py-4 text-right w-24 group-hover:bg-white"
+            class="px-6 py-2 text-right w-24 group-hover:bg-white"
             @click="$event.stopPropagation()"
           >
             <div class="flex items-center justify-end gap-2">
@@ -185,7 +185,7 @@ onMounted(() => {
             </div>
           </td>
           <td
-            class="px-6 py-4 text-right w-10 border-l border-gray-200 group-hover:bg-white"
+            class="px-6 py-2 text-right w-10 border-l border-gray-200 group-hover:bg-white"
             @click="$event.stopPropagation()"
           >
             <div class="flex items-center justify-end gap-2">

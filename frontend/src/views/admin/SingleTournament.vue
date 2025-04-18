@@ -285,7 +285,6 @@ onMounted(() => {
               <td class="px-6 py-3">Name</td>
               <td class="px-6 py-3">Archers</td>
               <td class="px-6 py-3"></td>
-              <td class="px-6 py-3"></td>
             </tr>
           </thead>
           <tbody>
