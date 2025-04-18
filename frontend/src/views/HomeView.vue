@@ -10,9 +10,7 @@ const data = [
   { num: 25, name: 'Sabine Bouron', team: 'KKPLO', arrows: [1, 0, 1, 0] },
 ]
 
-onMounted(() => {
-
-})
+onMounted(() => {})
 </script>
 
 <template>
@@ -20,5 +18,11 @@ onMounted(() => {
 
   <Match :shots="data" class="w-1/2 mx-auto" />
 
-  <div class="text-red-500">pour la partie client, mettre en place des socket pour automatiquement update le front quand un admin update un tournoi. Les sockets devront être créés lorsqu'un client affiche un tournoi en cours, un peu comme OGC ou Lishogi quand on regarde un tournoi en live. Aussi, sur la page d'accueil il serait bien de lister tout les tournois en cours.</div>
+  <div class="text-red-500">
+    pour la partie client, mettre en place des socket pour automatiquement update le front quand un
+    admin update un tournoi. Les sockets devront être créés lorsqu'un client affiche un tournoi en
+    cours, un peu comme OGC ou Lishogi quand on regarde un tournoi en live. Aussi, sur la page
+    d'accueil il serait bien de lister tout les tournois en cours. Retirer toutes les actions
+    d'administration si utilitsateurs lambda
+  </div>
 </template>
