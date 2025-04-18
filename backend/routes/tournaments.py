@@ -36,9 +36,7 @@ def get_tournaments_paginated(
     )
 
 
-@router.get(
-    "/tournaments/{tournament_id}", response_model=TournamentWithEverything
-)
+@router.get("/tournaments/{tournament_id}", response_model=TournamentWithEverything)
 def get_tournament_by_id(
     tournament_id: int,
     session: Session = Depends(get_session),
@@ -47,6 +45,27 @@ def get_tournament_by_id(
     if not tournament:
         raise HTTPException(status_code=404, detail="Tournament not found")
 
+    return tournament
+
+
+@router.put("/tournaments/{tournament_id}")
+def update_tournament(
+    tournament_id: int,
+    data: TournamentInput,
+    session: Session = Depends(get_session),
+):
+    tournament = session.get(Tournament, tournament_id)
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+
+    tournament.name = data.name
+    tournament.format = data.format
+    tournament.start_date = data.start_date
+    tournament.end_date = data.end_date
+    tournament.status = data.status
+
+    session.commit()
+    session.refresh(tournament)
     return tournament
 
 
