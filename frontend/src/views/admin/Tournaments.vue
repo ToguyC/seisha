@@ -176,7 +176,32 @@ onMounted(() => {
             </div>
           </td>
           <td class="px-6 py-4">
-            <div class="flex items-center gap-4">
+            <div
+              v-if="tournament.status === 'upcoming'"
+              class="bg-orange-100 text-orange-700 font-semibold w-20 rounded-sm flex items-center justify-center"
+            >
+              開催前
+            </div>
+            <div
+              v-else-if="tournament.status === 'live'"
+              class="bg-amaranth-500 text-white font-semibold w-20 rounded-sm flex items-center justify-center gap-2"
+            >
+              <div class="w-2 h-2 rounded-full bg-white"></div>
+              開催中
+            </div>
+            <div
+              v-else-if="tournament.status === 'finished'"
+              class="bg-wedgeblue-100 text-wedgeblue-700 font-semibold w-20 rounded-sm flex items-center justify-center"
+            >
+              終了
+            </div>
+            <div
+              v-else-if="tournament.status === 'cancelled'"
+              class="bg-red-100 text-red-700 font-semibold w-20 rounded-sm flex items-center justify-center"
+            >
+              中止
+            </div>
+            <!-- <div class="flex items-center gap-4">
               <div
                 v-if="tournament.status === 'upcoming'"
                 class="w-2 h-2 bg-orange-400 rounded-full"
@@ -193,7 +218,7 @@ onMounted(() => {
                 <PlusIcon class="w-full h-full rotate-45 text-amaranth-500" />
               </div>
               <div class="uppercase">{{ tournament.status }}</div>
-            </div>
+            </div> -->
           </td>
           <td
             class="px-6 py-4 text-right w-16 group-hover:bg-white"
