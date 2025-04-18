@@ -254,14 +254,14 @@ onMounted(() => {
     </tbody>
   </table>
 
-  <div class="w-full h-1 border-b border-gray-200 mb-5"></div>
+  <div class="w-full h-1 border-b border-gray-200"></div>
 
-  <div class="flex gap-20">
-    <div class="w-1/2">
+  <div class="flex gap-10">
+    <div class="w-1/2 py-5">
       <div class="flex items-center justify-between mb-6">
         <div class="text-xl font-bold text-gray-900 capitalize">{{ tournament.format }}</div>
         <button
-          class="w-1/4 flex items-center text-sm justify-center gap-4 px-4 py-2 text-white bg-blue-700 rounded hover:bg-blue-800 hover:cursor-pointer"
+          class="w-20 flex items-center text-sm justify-center gap-4 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 hover:cursor-pointer"
           @click="
             () => {
               if (tournament.format === 'team') {
@@ -272,8 +272,7 @@ onMounted(() => {
             }
           "
         >
-          <PlusIcon class="w-6 h-6" /> Register
-          {{ tournament.format === 'team' ? 'team' : 'archer' }}
+          <PlusIcon class="w-6 h-6" />
         </button>
       </div>
 
@@ -381,13 +380,15 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="w-1/2">
+    <div class="border-r border-gray-200"></div>
+
+    <div class="w-1/2 py-5">
       <div class="flex items-center justify-between mb-6">
         <div class="text-xl font-bold text-gray-900 capitalize">Matches</div>
         <button
-          class="w-1/4 flex items-center text-sm justify-center gap-4 px-4 py-2 text-white bg-blue-700 rounded hover:bg-blue-800 hover:cursor-pointer"
+          class="w-20 flex items-center text-sm justify-center gap-4 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 hover:cursor-pointer"
         >
-          <PlusIcon class="w-6 h-6" /> Add new match
+          <PlusIcon class="w-6 h-6" />
         </button>
       </div>
     </div>
