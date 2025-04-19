@@ -72,22 +72,24 @@ const addArcher = (archerId: number) => {
     <table class="w-full text-sm text-left rtl:text-right text-gray-500">
       <thead class="text-xs text-gray-500 uppercase bg-gray-50">
         <tr class="font-bold">
-          <td class="px-6 py-3"><HashtagIcon class="w-4 h-4" /></td>
+          <td class="px-6 py-3 flex gap-2">Number</td>
           <td class="px-6 py-3">Name</td>
           <td class="px-6 py-3"></td>
         </tr>
       </thead>
       <tbody>
         <tr
-          v-for="(archer, index) in tournament.archers"
+          v-for="(archerWithNumber, index) in tournament.archers.sort(
+            (a, b) => a.number - b.number,
+          )"
           :key="index"
           class="bg-white border-b border-gray-200 hover:bg-gray-50 hover:cursor-pointer group"
         >
-          <td class="px-6 py-2 w-4 text-gray-900 whitespace-nowrap font-semibold">
-            {{ archer.id }}
+          <td class="px-6 py-2 text-center w-4 text-gray-900 whitespace-nowrap font-semibold">
+            {{ archerWithNumber.number }}
           </td>
           <td scope="row" class="px-6 py-2 font-medium text-gray-900 whitespace-nowrap">
-            {{ archer.name }}
+            {{ archerWithNumber.archer.name }}
           </td>
           <td
             class="px-6 py-2 text-right w-10 border-l border-gray-200 group-hover:bg-white"
@@ -96,7 +98,7 @@ const addArcher = (archerId: number) => {
             <div class="flex items-center justify-end gap-2">
               <TrashIcon
                 class="w-6 h-6 text-red-500 hover:text-red-600 hover:bg-red-100 rounded-sm p-1"
-                @click="() => deleteArcher(archer.id)"
+                @click="() => deleteArcher(archerWithNumber.archer.id)"
               />
             </div>
           </td>

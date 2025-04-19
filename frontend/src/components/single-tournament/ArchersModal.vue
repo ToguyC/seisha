@@ -44,9 +44,11 @@ const filterArchers = (archers: Archer[], name: string) => {
 
 const archerInTournament = (archerId: number) => {
   if (tournament.format === 'team') {
-    return tournament.teams.some((team) => team.archers.some((archer) => archer.id === archerId))
+    return tournament.teams.some((team) =>
+      team.archers.some((archerWithNumber) => archerWithNumber.archer.id === archerId),
+    )
   }
-  return tournament.archers.some((archer) => archer.id === archerId)
+  return tournament.archers.some((archerWithNumber) => archerWithNumber.archer.id === archerId)
 }
 
 defineExpose({

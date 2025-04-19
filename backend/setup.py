@@ -69,23 +69,33 @@ if __name__ == "__main__":
         for tournament_id, team_list in teams.items():
             tournament = session.get(Tournament, tournament_id)
 
-            for team_data in team_list:
-                team = Team(name=team_data["name"])
+            for i, team_data in enumerate(team_list):
+                team = Team(name=team_data["name"], number=i + 1)
                 tournament.teams.append(team)
 
-                for archer_id in team_data["archers"]:
+                for j, archer_id in enumerate(team_data["archers"]):
                     archer = session.get(Archer, archer_id)
 
                     if archer:
-                        team.archers.append(archer)
+                        session.add(
+                            ArcherTeamLink(
+                                team_id=team.id, archer_id=archer.id, number=j + 1
+                            )
+                        )
 
         for tournament_id, archer_ids in individuals.items():
             tournament = session.get(Tournament, tournament_id)
 
-            for archer_id in archer_ids:
+            for i, archer_id in enumerate(archer_ids):
                 archer = session.get(Archer, archer_id)
 
                 if tournament and archer:
-                    tournament.archers.append(archer)
+                    session.add(
+                        ArcherTournamentLink(
+                            tournament_id=tournament.id,
+                            archer_id=archer.id,
+                            number=i + 1,
+                        )
+                    )
 
         session.commit()

@@ -9,11 +9,19 @@ from sqlmodel import Enum, Field, Relationship, SQLModel
 class ArcherTournamentLink(SQLModel, table=True):
     archer_id: int = Field(foreign_key="archer.id", primary_key=True)
     tournament_id: int = Field(foreign_key="tournament.id", primary_key=True)
+    number: int = Field(nullable=False)
+
+    archer: "Archer" = Relationship(back_populates="tournaments")
+    tournament: "Tournament" = Relationship(back_populates="archers")
 
 
 class ArcherTeamLink(SQLModel, table=True):
     archer_id: int = Field(foreign_key="archer.id", primary_key=True)
     team_id: int = Field(foreign_key="team.id", primary_key=True)
+    number: int = Field(nullable=False)
+
+    archer: "Archer" = Relationship(back_populates="teams")
+    team: "Team" = Relationship(back_populates="archers")
 
 
 class ArcherBase(SQLModel):
@@ -29,13 +37,9 @@ class ArcherBase(SQLModel):
 class Archer(ArcherBase, table=True):
     id: int = Field(default=None, primary_key=True)
 
-    series: List["Series"] = Relationship(back_populates="archer")  # type: ignore
-    tournaments: List["Tournament"] = Relationship(  # type: ignore
-        back_populates="archers", link_model=ArcherTournamentLink
-    )
-    teams: List["Team"] = Relationship(
-        back_populates="archers", link_model=ArcherTeamLink
-    )
+    series: List["Series"] = Relationship(back_populates="archer")
+    tournaments: List["ArcherTournamentLink"] = Relationship(back_populates="archer")
+    teams: List["ArcherTeamLink"] = Relationship(back_populates="archer")
 
 
 class ArcherPublic(ArcherBase):
@@ -43,6 +47,11 @@ class ArcherPublic(ArcherBase):
     name: str
     position: str
     accuracy: float
+
+
+class ArcherWithNumber(SQLModel):
+    archer: ArcherPublic
+    number: int = Field(nullable=False)
 
 
 class HitEnum(int, Enum):
@@ -66,7 +75,7 @@ class Series(SeriesBase, table=True):
     archer: Optional[Archer] = Relationship(back_populates="series")
 
     match_id: int = Field(default=None, foreign_key="match.id")
-    match: Optional["Match"] = Relationship(back_populates="series")  # type: ignore
+    match: Optional["Match"] = Relationship(back_populates="series")
 
     @property
     def arrows(self) -> List[HitEnum]:
@@ -96,10 +105,10 @@ class MatchBase(SQLModel):
 class Match(MatchBase, table=True):
     id: int = Field(default=None, primary_key=True)
 
-    series: List["Series"] = Relationship(back_populates="match")  # type: ignore
+    series: List["Series"] = Relationship(back_populates="match")
 
     tournament_id: int = Field(default=None, foreign_key="tournament.id")
-    tournament: Optional["Tournament"] = Relationship(back_populates="matches")  # type: ignore
+    tournament: Optional["Tournament"] = Relationship(back_populates="matches")
 
 
 class MatchPublic(MatchBase):
@@ -108,6 +117,7 @@ class MatchPublic(MatchBase):
 
 class TeamBase(SQLModel):
     name: str
+    number: int = Field(nullable=False)
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
     updated_at: datetime = Field(
         sa_column=Column(DateTime, default=func.now(), onupdate=func.now())
@@ -117,15 +127,18 @@ class TeamBase(SQLModel):
 class Team(TeamBase, table=True):
     id: int = Field(default=None, primary_key=True)
 
-    archers: List["Archer"] = Relationship(back_populates="teams", link_model=ArcherTeamLink)  # type: ignore
+    archers: List["ArcherTeamLink"] = Relationship(
+        back_populates="team", cascade_delete=True
+    )
 
     tournament_id: int = Field(default=None, foreign_key="tournament.id")
-    tournament: Optional["Tournament"] = Relationship(back_populates="teams")  # type: ignore
+    tournament: Optional["Tournament"] = Relationship(back_populates="teams")
 
 
 class TeamPublic(TeamBase):
     id: int
     name: str
+    number: int
 
 
 class TournamentBase(SQLModel):
@@ -143,11 +156,11 @@ class TournamentBase(SQLModel):
 class Tournament(TournamentBase, table=True):
     id: int = Field(default=None, primary_key=True)
 
-    matches: List["Match"] = Relationship(back_populates="tournament")  # type: ignore
-    archers: List["Archer"] = Relationship(  # type: ignore
-        back_populates="tournaments", link_model=ArcherTournamentLink
+    matches: List["Match"] = Relationship(back_populates="tournament")
+    archers: List["ArcherTournamentLink"] = Relationship(
+        back_populates="tournament", cascade_delete=True
     )
-    teams: List["Team"] = Relationship(back_populates="tournament")  # type: ignore
+    teams: List["Team"] = Relationship(back_populates="tournament", cascade_delete=True)
 
 
 class TournamentPublic(TournamentBase):
@@ -168,8 +181,8 @@ class MatchWithSeriesAndArchers(MatchPublic):
     archers: List[ArcherPublic] = []
 
 
-class TeamsWithArchers(TeamPublic):
-    archers: List[ArcherPublic] = []
+class TeamWithArchers(TeamPublic):
+    archers: List[ArcherWithNumber] = []
 
 
 class TournamentWithArchers(TournamentPublic):
@@ -181,17 +194,14 @@ class TournamentWithArchersAndMatches(TournamentWithArchers):
 
 
 class TournamentWithMatchesAndTeams(TournamentWithArchers):
-    teams: List[TeamsWithArchers] = []
+    teams: List[TeamWithArchers] = []
 
 
 class TournamentWithEverything(TournamentPublic):
     matches: List[MatchWithSeriesAndArchers] = []
-    teams: List[TeamsWithArchers] = []
-    archers: List[ArcherPublic] = []
+    teams: List[TeamWithArchers] = []
+    archers: List[ArcherWithNumber] = []
 
 
 class ArcherWithTournaments(ArcherPublic):
     tournaments: List[TournamentPublic] = []
-
-class TeamWithArchers(TeamPublic):
-    archers: List[ArcherPublic] = []

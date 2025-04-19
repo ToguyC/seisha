@@ -5,10 +5,16 @@ export type Archer = {
   accuracy: number
 }
 
+export type ArcherWithNumber = {
+  archer: Archer
+  number: number
+}
+
 export type Team = {
   id: number
   name: string
-  archers: Archer[]
+  number: number
+  archers: ArcherWithNumber[]
 }
 
 export type Match = {
@@ -26,7 +32,7 @@ export type Tournament = {
 }
 
 export type TournamentWithRelations = Tournament & {
-  archers: Archer[]
+  archers: ArcherWithNumber[]
   teams: Team[]
   matches: Match[]
 }

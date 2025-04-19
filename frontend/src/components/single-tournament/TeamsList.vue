@@ -144,7 +144,7 @@ const removeArcherFromTeam = (archerId: number) => {
           "
         >
           <td class="px-6 py-2 w-4 text-gray-900 whitespace-nowrap font-semibold">
-            {{ team.id }}
+            {{ team.number }}
           </td>
           <td scope="row" class="px-6 py-2 font-medium text-gray-900 whitespace-nowrap">
             {{ team.name }}
@@ -152,13 +152,18 @@ const removeArcherFromTeam = (archerId: number) => {
 
           <td class="px-6 py-2 w-full flex flex-col items-start gap-2 text-gray-900 capitalize">
             <div
-              v-for="(archer, idx) in team.archers"
+              v-for="(archerWithNumber, idx) in team.archers.sort((a, b) => a.number - b.number)"
               :key="idx"
               class="w-full flex items-center justify-between gap-2"
             >
-              {{ archer.name }}
+              <div class="w-full flex items-center gap-2">
+                <div class="flex gap-2 p-1 bg-gray-200 text-gray-800 rounded-sm">
+                  {{ archerWithNumber.number }}<span>番</span>
+                </div>
+                {{ archerWithNumber.archer.name }}
+              </div>
               <div
-                v-if="archer.position === 'zasha'"
+                v-if="archerWithNumber.archer.position === 'zasha'"
                 class="bg-blue-100 text-blue-800 text-xs rounded-sm w-10 flex items-center justify-center"
               >
                 坐射
@@ -243,14 +248,16 @@ const removeArcherFromTeam = (archerId: number) => {
 
         <div class="w-full">
           <div
-            v-for="(archer, index) in editTeamInfo.archers"
+            v-for="(archerWithNumber, index) in editTeamInfo.archers.sort(
+              (a, b) => a.number - b.number,
+            )"
             :key="index"
             class="w-full flex items-center justify-between p-2"
           >
-            {{ archer.name }}
+            {{ archerWithNumber.archer.name }}
             <TrashIcon
               class="w-6 h-6 text-red-500 hover:text-red-600 hover:bg-red-100 hover:cursor-pointer rounded-sm p-1"
-              @click="() => removeArcherFromTeam(archer.id)"
+              @click="() => removeArcherFromTeam(archerWithNumber.archer.id)"
             />
           </div>
           <div

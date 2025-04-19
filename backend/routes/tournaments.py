@@ -1,8 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import selectinload
 from sqlmodel import Session, func, select
 
 from ..api_models import PaginatedTournaments, TeamInput, TournamentInput
-from ..models.models import Archer, Team, Tournament, TournamentWithEverything
+from ..models.models import (
+    Archer,
+    ArcherTournamentLink,
+    Team,
+    Tournament,
+    TournamentWithEverything,
+)
 from ..utils.sqlite import get_session
 
 router = APIRouter()
@@ -90,18 +97,20 @@ def add_archer_to_tournament(
     archer_id: int,
     session: Session = Depends(get_session),
 ):
-    tournament = session.get(Tournament, tournament_id)
-    if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament not found")
+    last_entry = session.exec(
+        select(ArcherTournamentLink)
+        .where(ArcherTournamentLink.tournament_id == tournament_id)
+        .order_by(ArcherTournamentLink.number.desc())
+    ).first()
 
-    archer = session.get(Archer, archer_id)
-    if not archer:
-        raise HTTPException(status_code=404, detail="Archer not found")
-
-    tournament.archers.append(archer)
+    archer_tournament_link = ArcherTournamentLink(
+        tournament_id=tournament_id,
+        archer_id=archer_id,
+        number=last_entry.number + 1 if last_entry else 1,
+    )
+    session.add(archer_tournament_link)
     session.commit()
-    session.refresh(tournament)
-    return tournament
+    return {"message": "Archer added to tournament"}
 
 
 @router.post("/tournaments/{tournament_id}/teams")
@@ -114,7 +123,14 @@ def add_team_to_tournament(
     if not tournament:
         raise HTTPException(status_code=404, detail="Tournament not found")
 
-    team = Team(name=data.name)
+    last_entry = session.exec(
+        select(Team)
+        .where(Team.tournament_id == tournament_id)
+        .order_by(Team.number.desc())
+    ).first()
+    team_number = last_entry.number + 1 if last_entry else 1
+
+    team = Team(name=data.name, number=team_number)
     tournament.teams.append(team)
     session.add(team)
     session.commit()
@@ -128,21 +144,33 @@ def remove_archer_from_tournament(
     archer_id: int,
     session: Session = Depends(get_session),
 ):
-    tournament = session.get(Tournament, tournament_id)
-    if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament not found")
+    archer_tournament_link = session.get(
+        ArcherTournamentLink, (archer_id, tournament_id)
+    )
+    if not archer_tournament_link:
+        raise HTTPException(status_code=404, detail="Archer not found in tournament")
 
-    archer = session.get(Archer, archer_id)
-    if not archer:
-        raise HTTPException(status_code=404, detail="Archer not found")
+    removed_number = archer_tournament_link.number
 
-    try:
-        tournament.archers.remove(archer)
-    except ValueError:
-        raise HTTPException(
-            status_code=404, detail="Archer not found in this tournament"
+    session.delete(archer_tournament_link)
+
+    # Shift numbers of the remaining archers
+    stmt = (
+        select(ArcherTournamentLink)
+        .where(
+            ArcherTournamentLink.tournament_id == tournament_id,
+            ArcherTournamentLink.number > removed_number,
         )
+        .order_by(ArcherTournamentLink.number.asc())
+    )
+    links_to_update = session.exec(stmt).all()
+
+    for link in links_to_update:
+        link.number -= 1
+        session.add(link)
+
     session.commit()
+
     return {"message": "Archer removed from tournament"}
 
 
