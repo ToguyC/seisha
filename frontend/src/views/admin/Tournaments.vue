@@ -12,6 +12,7 @@ import router from '@/router'
 import {
   BookmarkIcon,
   CalendarDaysIcon,
+  CheckIcon,
   HashtagIcon,
   MagnifyingGlassIcon,
   PencilSquareIcon,
@@ -50,6 +51,7 @@ const newTournamentInfo = ref<Tournament>({
   end_date: '',
   format: '',
   status: '',
+  target_count: 0,
 })
 const editTournamentInfo = ref<Tournament>({
   id: 0,
@@ -58,6 +60,7 @@ const editTournamentInfo = ref<Tournament>({
   end_date: '',
   format: '',
   status: '',
+  target_count: 0,
 })
 
 const fetchPage = (page: number) => {
@@ -144,6 +147,7 @@ onMounted(() => {
           <th class="px-6 py-3">Name</th>
           <th class="px-6 py-3">Participant count</th>
           <th class="px-6 py-3">Date</th>
+          <th class="px-6 py-3">Matos</th>
           <th class="px-6 py-3">Format</th>
           <th class="px-6 py-3">Status</th>
           <th class="px-6 py-3"></th>
@@ -175,6 +179,7 @@ onMounted(() => {
             {{ new Date(tournament.start_date).toLocaleDateString() }} -
             {{ new Date(tournament.end_date).toLocaleDateString() }}
           </td>
+          <td class="px-6 py-4">{{ tournament.target_count }}</td>
           <td class="px-6 py-4">
             <div
               v-if="tournament.format === 'individual'"
@@ -316,16 +321,48 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="w-full">
-        <label for="archer-position" class="block mb-2 text-gray-900">Format</label>
-        <select
-          id="archer-position"
-          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-          v-model="newTournamentInfo.format"
-        >
-          <option value="individual">Individual</option>
-          <option value="team">Team</option>
-        </select>
+      <div class="w-full flex gap-5">
+        <div class="w-1/2">
+          <label for="archer-position" class="block mb-2 text-gray-900">Format</label>
+          <select
+            id="archer-position"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+            v-model="newTournamentInfo.format"
+          >
+            <option value="individual">Individual</option>
+            <option value="team">Team</option>
+          </select>
+        </div>
+        <div class="w-1/2">
+          <label for="tournament-matos" class="block mb-2 text-gray-900">Matos count</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 start-0 flex items-center ps-2.5 pointer-events-none">
+              <div class="flex items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 573 573"
+                  class="w-5 h-5 fill-gray-500"
+                >
+                  <path
+                    d="M286.5 175C348.08 175 398 224.92 398 286.5C398 348.08 348.08 398 286.5 398C224.92 398 175 348.08 175 286.5C175 224.92 224.92 175 286.5 175ZM286.5 231C255.848 231 231 255.848 231 286.5C231 317.152 255.848 342 286.5 342C317.152 342 342 317.152 342 286.5C342 255.848 317.152 231 286.5 231Z"
+                  />
+                  <path
+                    d="M286.5 105C386.74 105 468 186.26 468 286.5C468 386.74 386.74 468 286.5 468C186.26 468 105 386.74 105 286.5C105 186.26 186.26 105 286.5 105ZM286.5 128C198.963 128 128 198.963 128 286.5C128 374.037 198.963 445 286.5 445C374.037 445 445 374.037 445 286.5C445 198.963 374.037 128 286.5 128Z"
+                  />
+                  <path
+                    d="M286.5 0C444.73 0 573 128.27 573 286.5C573 444.73 444.73 573 286.5 573C128.27 573 0 444.73 0 286.5C0 128.27 128.27 0 286.5 0ZM286.5 59C160.855 59 59 160.855 59 286.5C59 412.145 160.855 514 286.5 514C412.145 514 514 412.145 514 286.5C514 160.855 412.145 59 286.5 59Z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <input
+              type="number"
+              id="tournament-matos"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5"
+              v-model="newTournamentInfo.target_count"
+            />
+          </div>
+        </div>
       </div>
 
       <div class="w-full">
@@ -400,16 +437,48 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="w-full">
-        <label for="archer-position" class="block mb-2 text-gray-900">Format</label>
-        <select
-          id="archer-position"
-          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-          v-model="editTournamentInfo.format"
-        >
-          <option value="individual">Individual</option>
-          <option value="team">Team</option>
-        </select>
+      <div class="w-full flex gap-5">
+        <div class="w-1/2">
+          <label for="archer-position" class="block mb-2 text-gray-900">Format</label>
+          <select
+            id="archer-position"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+            v-model="editTournamentInfo.format"
+          >
+            <option value="individual">Individual</option>
+            <option value="team">Team</option>
+          </select>
+        </div>
+        <div class="w-1/2">
+          <label for="tournament-matos" class="block mb-2 text-gray-900">Matos count</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 start-0 flex items-center ps-2.5 pointer-events-none">
+              <div class="flex items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 573 573"
+                  class="w-5 h-5 fill-gray-500"
+                >
+                  <path
+                    d="M286.5 175C348.08 175 398 224.92 398 286.5C398 348.08 348.08 398 286.5 398C224.92 398 175 348.08 175 286.5C175 224.92 224.92 175 286.5 175ZM286.5 231C255.848 231 231 255.848 231 286.5C231 317.152 255.848 342 286.5 342C317.152 342 342 317.152 342 286.5C342 255.848 317.152 231 286.5 231Z"
+                  />
+                  <path
+                    d="M286.5 105C386.74 105 468 186.26 468 286.5C468 386.74 386.74 468 286.5 468C186.26 468 105 386.74 105 286.5C105 186.26 186.26 105 286.5 105ZM286.5 128C198.963 128 128 198.963 128 286.5C128 374.037 198.963 445 286.5 445C374.037 445 445 374.037 445 286.5C445 198.963 374.037 128 286.5 128Z"
+                  />
+                  <path
+                    d="M286.5 0C444.73 0 573 128.27 573 286.5C573 444.73 444.73 573 286.5 573C128.27 573 0 444.73 0 286.5C0 128.27 128.27 0 286.5 0ZM286.5 59C160.855 59 59 160.855 59 286.5C59 412.145 160.855 514 286.5 514C412.145 514 514 412.145 514 286.5C514 160.855 412.145 59 286.5 59Z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <input
+              type="number"
+              id="tournament-matos"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5"
+              v-model="editTournamentInfo.target_count"
+            />
+          </div>
+        </div>
       </div>
 
       <div class="w-full">
@@ -454,7 +523,7 @@ onMounted(() => {
             }
           "
         >
-          <PlusIcon class="w-6 h-6" /> Add new tournament
+          <CheckIcon class="w-6 h-6" /> Edit tournament
         </button>
         <button
           class="w-1/2 px-4 py-2 mr-2 text-sm text-gray-900 bg-white border border-gray-200 rounded hover:bg-gray-100 hover:cursor-pointer hover:text-blue-700"

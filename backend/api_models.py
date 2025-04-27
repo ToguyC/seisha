@@ -3,7 +3,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from .models.models import ArcherWithTournaments, TournamentWithEverything
+from .models.models import ArcherWithTournaments, TournamentWithArchersAndTeams
 
 
 class ArrowInput(BaseModel):
@@ -23,6 +23,7 @@ class TournamentInput(BaseModel):
     start_date: datetime
     end_date: datetime
     status: str = "upcoming"
+    target_count: int
 
 
 class TeamInput(BaseModel):
@@ -38,7 +39,7 @@ class Paginated(BaseModel):
 
 
 class PaginatedTournaments(Paginated):
-    data: List[TournamentWithEverything]
+    data: List[TournamentWithArchersAndTeams]
 
 
 class PaginatedArcher(Paginated):

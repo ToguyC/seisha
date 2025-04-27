@@ -9,6 +9,7 @@ from ..models.models import (
     Team,
     Tournament,
     TournamentWithEverything,
+    Match
 )
 from ..utils.sqlite import get_session
 
@@ -70,6 +71,7 @@ def update_tournament(
     tournament.start_date = data.start_date
     tournament.end_date = data.end_date
     tournament.status = data.status
+    tournament.target_count = data.target_count
 
     session.commit()
     session.refresh(tournament)
@@ -84,6 +86,7 @@ def post_tournament(data: TournamentInput, session: Session = Depends(get_sessio
         start_date=data.start_date,
         end_date=data.end_date,
         status=data.status,
+        target_count=data.target_count,
     )
     session.add(tournament)
     session.commit()
@@ -133,6 +136,24 @@ def add_team_to_tournament(
     team = Team(name=data.name, number=team_number)
     tournament.teams.append(team)
     session.add(team)
+    session.commit()
+    session.refresh(tournament)
+    return tournament
+
+
+@router.post("/tournaments/{tournament_id}/matches", response_model=TournamentWithEverything)
+def add_match_to_tournament(
+    tournament_id: int,
+    session: Session = Depends(get_session),
+):
+    tournament = session.get(Tournament, tournament_id)
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+
+    match = Match()
+    match.tournament = tournament
+
+    session.add(match)
     session.commit()
     session.refresh(tournament)
     return tournament

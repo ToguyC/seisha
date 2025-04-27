@@ -43,17 +43,19 @@ const changeStatus = (status: string) => {
           <td class="px-3">{{ new Date(tournament.start_date).toLocaleDateString() }}</td>
           <td class="w-40 font-semibold p-1 bg-gray-200 text-center">End date</td>
           <td class="px-3">{{ new Date(tournament.end_date).toLocaleDateString() }}</td>
+          <td class="w-40 font-semibold p-1 bg-gray-200 text-center">Matos</td>
+          <td class="px-3">{{ tournament.target_count }}的</td>
           <td class="w-40 font-semibold p-1 bg-gray-200 text-center">Format</td>
           <td class="px-3">
             <div
               v-if="tournament.format === 'individual'"
-              class="bg-emerald-100 text-emerald-700 font-semibold w-12 rounded-sm flex items-center justify-center"
+              class="p-1 bg-emerald-100 text-emerald-700 font-semibold w-12 rounded-sm flex items-center justify-center"
             >
               個人
             </div>
             <div
               v-else
-              class="bg-purple-100 text-purple-700 font-semibold w-16 rounded-sm flex items-center justify-center"
+              class="p-1 bg-purple-100 text-purple-700 font-semibold w-16 rounded-sm flex items-center justify-center"
             >
               チーム
             </div>

@@ -17,9 +17,16 @@ export type Team = {
   archers: ArcherWithNumber[]
 }
 
+export type Series = {
+  id: number
+  arrows_raw: string
+  archer: Archer
+}
+
 export type Match = {
   id: number
-  series: []
+  series: Series[]
+  archers: Archer[]
 }
 
 export type Tournament = {
@@ -29,6 +36,7 @@ export type Tournament = {
   end_date: string
   format: string
   status: string
+  target_count: number
 }
 
 export type TournamentWithRelations = Tournament & {

@@ -29,6 +29,10 @@ export const postTournamentArcher = async (tournamentId: number, archerId: numbe
   return api.post(`/tournaments/${tournamentId}/archers/${archerId}`)
 }
 
+export const postTournamentMatch = async (tournamentId: number) => {
+  return api.post(`/tournaments/${tournamentId}/matches`)
+}
+
 export const deleteTournamentArcher = async (tournamentId: number, archerId: number) => {
   return api.delete(`/tournaments/${tournamentId}/archers/${archerId}`)
 }

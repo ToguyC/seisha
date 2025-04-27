@@ -24,6 +24,11 @@ class ArcherTeamLink(SQLModel, table=True):
     team: "Team" = Relationship(back_populates="archers")
 
 
+class ArcherMatchLink(SQLModel, table=True):
+    archer_id: int = Field(foreign_key="archer.id", primary_key=True)
+    match_id: int = Field(foreign_key="match.id", primary_key=True)
+
+
 class ArcherBase(SQLModel):
     name: str
     position: str = Field(default="zasha")
@@ -37,9 +42,12 @@ class ArcherBase(SQLModel):
 class Archer(ArcherBase, table=True):
     id: int = Field(default=None, primary_key=True)
 
-    series: List["Series"] = Relationship(back_populates="archer")
+    series: List["Series"] = Relationship(back_populates="archer", cascade_delete=True)
     tournaments: List["ArcherTournamentLink"] = Relationship(back_populates="archer")
     teams: List["ArcherTeamLink"] = Relationship(back_populates="archer")
+    matches: List["Match"] = Relationship(
+        back_populates="archers", link_model=ArcherMatchLink
+    )
 
 
 class ArcherPublic(ArcherBase):
@@ -105,7 +113,10 @@ class MatchBase(SQLModel):
 class Match(MatchBase, table=True):
     id: int = Field(default=None, primary_key=True)
 
-    series: List["Series"] = Relationship(back_populates="match")
+    series: List["Series"] = Relationship(back_populates="match", cascade_delete=True)
+    archers: List["Archer"] = Relationship(
+        back_populates="matches", link_model=ArcherMatchLink
+    )
 
     tournament_id: int = Field(default=None, foreign_key="tournament.id")
     tournament: Optional["Tournament"] = Relationship(back_populates="matches")
@@ -146,6 +157,7 @@ class TournamentBase(SQLModel):
     start_date: datetime
     end_date: datetime
     format: str
+    target_count: int = Field(default=5)
     status: str = Field(default="upcoming")
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
     updated_at: datetime = Field(
@@ -176,7 +188,7 @@ class SeriesWithArcher(SeriesPublic):
     archer: ArcherPublic
 
 
-class MatchWithSeriesAndArchers(MatchPublic):
+class MatchWithSeries(MatchPublic):
     series: List[SeriesWithArcher] = []
     archers: List[ArcherPublic] = []
 
@@ -189,16 +201,17 @@ class TournamentWithArchers(TournamentPublic):
     archers: List[ArcherPublic] = []
 
 
-class TournamentWithArchersAndMatches(TournamentWithArchers):
-    matches: List[MatchWithSeriesAndArchers] = []
-
-
 class TournamentWithMatchesAndTeams(TournamentWithArchers):
     teams: List[TeamWithArchers] = []
 
 
+class TournamentWithArchersAndTeams(TournamentWithMatchesAndTeams):
+    archers: List[ArcherWithNumber] = []
+    teams: List[TeamWithArchers] = []
+
+
 class TournamentWithEverything(TournamentPublic):
-    matches: List[MatchWithSeriesAndArchers] = []
+    matches: List[MatchWithSeries] = []
     teams: List[TeamWithArchers] = []
     archers: List[ArcherWithNumber] = []
 
