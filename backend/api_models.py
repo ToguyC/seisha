@@ -12,6 +12,10 @@ class ArrowInput(BaseModel):
     shot: int
 
 
+class MatchArrowInput(BaseModel):
+    arrow: int
+
+
 class ArcherInput(BaseModel):
     name: str
     position: str

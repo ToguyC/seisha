@@ -147,7 +147,36 @@ def generate_individual_match(session: Session, tournament: Tournament):
         select(Archer).where(Archer.id.in_([link.archer_id for link in archer_links]))
     ).all()
     target_count = tournament.target_count
-    
+    matches = tournament.matches
+
+    matches_per_archer = {
+        archer.id: sum(
+            1 for match in matches if archer.id in map(lambda x: x.id, match.archers)
+        )
+        for archer in archers
+    }
+    most_played_archer = max(matches_per_archer.values())
+    archers_left_to_play = [
+        archer
+        for archer in archers
+        if matches_per_archer[archer.id] < most_played_archer
+    ]
+
+    if len(archers_left_to_play) == 0:
+        new_match_archers = archers[:target_count]
+    else:
+        new_match_archers = archers_left_to_play[:target_count]
+
+    new_match = Match()
+    new_match.tournament = tournament
+    new_match.archers = new_match_archers
+
+    session.add(new_match)
+    session.commit()
+    session.refresh(new_match)
+    session.refresh(tournament)
+
+    return tournament
 
 
 @router.post(
@@ -169,7 +198,7 @@ def add_match_to_tournament(
 
     match tournament.format:
         case "individual":
-            generate_individual_match(session, tournament)
+            tournament = generate_individual_match(session, tournament)
         case "team":
             raise HTTPException(
                 status_code=501, detail="Team match generation not implemented yet"
