@@ -75,7 +75,7 @@ onMounted(() => {
   <div class="w-full h-1 border-b border-gray-200"></div>
 
   <div class="flex gap-10">
-    <div class="w-1/2 py-5">
+    <div class="w-2/5 py-5">
       <ArchersList
         v-if="tournament.format === 'individual'"
         :tournament="tournament"
@@ -86,7 +86,7 @@ onMounted(() => {
 
     <div class="border-r border-gray-200"></div>
 
-    <div class="w-1/2 py-5">
+    <div class="w-3/5 py-5">
       <Matches :tournament="tournament" @fetch-tournament="fetchTournament" />
     </div>
   </div>
