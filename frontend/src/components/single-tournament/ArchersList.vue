@@ -92,12 +92,12 @@ const addArcher = (archerId: number) => {
             {{ archerWithNumber.archer.name }}
           </td>
           <td
-            class="px-6 py-2 text-right w-10 border-l border-gray-200 group-hover:bg-white"
+            class="p-1 text-right w-10 border-l border-gray-200 group-hover:bg-white"
             @click="$event.stopPropagation()"
           >
-            <div class="flex items-center justify-end gap-2">
+            <div class="w-full py-2 flex items-center justify-center gap-2 rounded text-red-700 bg-red-100 hover:bg-red-200">
               <TrashIcon
-                class="w-6 h-6 text-red-500 hover:text-red-600 hover:bg-red-100 rounded-sm p-1"
+                class="w-4 h-4 rounded-sm"
                 @click="() => deleteArcher(archerWithNumber.archer.id)"
               />
             </div>

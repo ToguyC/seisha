@@ -87,7 +87,7 @@ onMounted(() => {
     <div class="border-r border-gray-200"></div>
 
     <div class="w-1/2 py-5">
-      <Matches :tournament="tournament" />
+      <Matches :tournament="tournament" @fetch-tournament="fetchTournament" />
     </div>
   </div>
 </template>

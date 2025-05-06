@@ -25,6 +25,7 @@ export type Series = {
 
 export type Match = {
   id: number
+  type: string
   series: Series[]
   archers: Archer[]
 }
