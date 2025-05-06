@@ -38,15 +38,16 @@ tournaments = [
         "format": "team",
         "start_date": datetime(2025, 6, 26),
         "end_date": datetime(2025, 6, 26),
-        "target_count": 6,
+        "target_count": 4,
         "status": "upcoming",
     },
 ]
 
 teams = {
     2: [
-        {"name": "Team A", "archers": [2, 3, 4]},
-        {"name": "Team B", "archers": [1, 6, 7]},
+        {"name": "Team A", "archers": [2, 3]},
+        {"name": "Team B", "archers": [4, 1]},
+        {"name": "Team C", "archers": [6, 7]},
     ]
 }
 
@@ -74,23 +75,17 @@ matches = {
     ],
     2: [
         {
-            "archers": [2, 3, 4, 1, 6, 7],
+            "archers": [2, 3, 4, 1],
             "series": [
                 {"archer_id": 2, "arrows": [0, 1, 1, 0]},
                 {"archer_id": 3, "arrows": [1, 0, 1, 0]},
                 {"archer_id": 4, "arrows": [0, 1, 0, 1]},
                 {"archer_id": 1, "arrows": [1, 1, 0, 0]},
-                {"archer_id": 6, "arrows": [0, 0, 1, 1]},
-                {"archer_id": 7, "arrows": [1, 0, 0, 1]},
             ]
         },
         {
-            "archers": [2, 3, 4, 1, 6, 7],
+            "archers": [6, 7],
             "series": [
-                {"archer_id": 2, "arrows": [1, 0, 1, 0]},
-                {"archer_id": 3, "arrows": [0, 1, 0, 1]},
-                {"archer_id": 4, "arrows": [1, 1, 0, 0]},
-                {"archer_id": 1, "arrows": [0, 0, 1, 1]},
                 {"archer_id": 6, "arrows": [1, 0, 0, 1]},
                 {"archer_id": 7, "arrows": [0, 1, 1, 0]},
             ]

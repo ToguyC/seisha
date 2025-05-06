@@ -6,10 +6,10 @@ from ..api_models import PaginatedTournaments, TeamInput, TournamentInput
 from ..models.models import (
     Archer,
     ArcherTournamentLink,
+    Match,
     Team,
     Tournament,
     TournamentWithEverything,
-    Match,
 )
 from ..utils.sqlite import get_session
 
@@ -179,6 +179,74 @@ def generate_individual_match(session: Session, tournament: Tournament):
     return tournament
 
 
+def generate_team_match(session: Session, tournament: Tournament):
+    teams = sorted(tournament.teams, key=lambda x: x.number)
+    target_count = tournament.target_count
+    matches = tournament.matches
+
+    team_representantives_links = [team.archers[0] for team in teams]
+    team_representantives = session.exec(
+        select(Archer).where(
+            Archer.id.in_([link.archer_id for link in team_representantives_links])
+        )
+    ).all()
+
+    matches_per_representative = {
+        representative.id: sum(
+            1
+            for match in matches
+            if representative.id in map(lambda x: x.id, match.archers)
+        )
+        for representative in team_representantives
+    }
+
+    most_played_representative = max(matches_per_representative.values())
+    teams_left_to_play = [
+        team
+        for team in teams
+        if matches_per_representative[team.archers[0].archer_id]
+        < most_played_representative
+    ]
+
+    def fill_spots(teams, target_count):
+        spots = target_count
+        new_match_teams = []
+
+        for team in teams:
+            if spots == 0:
+                break
+
+            new_match_teams.append(team)
+            spots -= len(team.archers)
+
+        return new_match_teams
+
+    if len(teams_left_to_play) == 0:
+        new_match_teams = fill_spots(teams, target_count)
+    else:
+        new_match_teams = fill_spots(teams_left_to_play, target_count)
+
+    new_match_archer_team_links = [
+        archer for team in new_match_teams for archer in team.archers
+    ]
+    new_match_archers = session.exec(
+        select(Archer).where(
+            Archer.id.in_([link.archer_id for link in new_match_archer_team_links])
+        )
+    ).all()
+
+    new_match = Match()
+    new_match.tournament = tournament
+    new_match.archers = new_match_archers
+
+    session.add(new_match)
+    session.commit()
+    session.refresh(new_match)
+    session.refresh(tournament)
+
+    return tournament
+
+
 @router.post(
     "/tournaments/{tournament_id}/matches", response_model=TournamentWithEverything
 )
@@ -200,9 +268,7 @@ def add_match_to_tournament(
         case "individual":
             tournament = generate_individual_match(session, tournament)
         case "team":
-            raise HTTPException(
-                status_code=501, detail="Team match generation not implemented yet"
-            )
+            tournament = generate_team_match(session, tournament)
         case _:
             raise HTTPException(status_code=400, detail="Invalid tournament format")
 
