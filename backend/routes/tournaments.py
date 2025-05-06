@@ -9,7 +9,7 @@ from ..models.models import (
     Team,
     Tournament,
     TournamentWithEverything,
-    Match
+    Match,
 )
 from ..utils.sqlite import get_session
 
@@ -141,7 +141,18 @@ def add_team_to_tournament(
     return tournament
 
 
-@router.post("/tournaments/{tournament_id}/matches", response_model=TournamentWithEverything)
+def generate_individual_match(session: Session, tournament: Tournament):
+    archer_links = sorted(tournament.archers, key=lambda x: x.number)
+    archers = session.exec(
+        select(Archer).where(Archer.id.in_([link.archer_id for link in archer_links]))
+    ).all()
+    target_count = tournament.target_count
+    
+
+
+@router.post(
+    "/tournaments/{tournament_id}/matches", response_model=TournamentWithEverything
+)
 def add_match_to_tournament(
     tournament_id: int,
     session: Session = Depends(get_session),
@@ -150,12 +161,22 @@ def add_match_to_tournament(
     if not tournament:
         raise HTTPException(status_code=404, detail="Tournament not found")
 
-    match = Match()
-    match.tournament = tournament
+    if not all(m.finished for m in tournament.matches):
+        raise HTTPException(
+            status_code=400,
+            detail="All matches must be finished before generating a new one",
+        )
 
-    session.add(match)
-    session.commit()
-    session.refresh(tournament)
+    match tournament.format:
+        case "individual":
+            generate_individual_match(session, tournament)
+        case "team":
+            raise HTTPException(
+                status_code=501, detail="Team match generation not implemented yet"
+            )
+        case _:
+            raise HTTPException(status_code=400, detail="Invalid tournament format")
+
     return tournament
 
 

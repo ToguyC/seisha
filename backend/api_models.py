@@ -3,7 +3,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from .models.models import ArcherWithTournaments, TournamentWithArchersAndTeams
+from .models.models import ArcherWithTournaments, TournamentWithArchersAndTeams, ArcherPublic
 
 
 class ArrowInput(BaseModel):
@@ -43,7 +43,7 @@ class PaginatedTournaments(Paginated):
 
 
 class PaginatedArcher(Paginated):
-    data: List[ArcherWithTournaments]
+    data: List[ArcherPublic]
 
 
 class ArcherSearchInput(BaseModel):

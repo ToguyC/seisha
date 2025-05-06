@@ -104,6 +104,7 @@ class SeriesPublic(SeriesBase):
 
 
 class MatchBase(SQLModel):
+    type: str = Field(default="standard")
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
     updated_at: datetime = Field(
         sa_column=Column(DateTime, default=func.now(), onupdate=func.now())
@@ -120,6 +121,15 @@ class Match(MatchBase, table=True):
 
     tournament_id: int = Field(default=None, foreign_key="tournament.id")
     tournament: Optional["Tournament"] = Relationship(back_populates="matches")
+
+    @property
+    def finished(self) -> bool:
+        match self.type:
+            case "standard":
+                finished_series = sum(
+                    1 for series in self.series if len(series.arrows) == 4
+                )
+                return finished_series == len(self.archers)
 
 
 class MatchPublic(MatchBase):
