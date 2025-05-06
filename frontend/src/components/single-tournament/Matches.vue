@@ -18,6 +18,8 @@ const fetchTournament = () => {
 }
 
 const mouseHoverArrow = ref<{ match: number; archer: number; arrow: number } | null>(null)
+const newMatchError = ref(false)
+const newMatchErrorMessage = ref('')
 
 const isIndividual = computed(() => {
   console.log(tournament)
@@ -39,7 +41,13 @@ const generateNextMatch = () => {
       fetchTournament()
     })
     .catch((err) => {
-      console.error(err.message)
+      newMatchError.value = true
+      newMatchErrorMessage.value = err.response.data.detail
+
+      setTimeout(() => {
+        newMatchError.value = false
+        newMatchErrorMessage.value = ''
+      }, 3000)
     })
 }
 
@@ -144,43 +152,60 @@ const deleteMatch = (matchId: number) => {
   <div>
     <div class="flex items-center justify-between mb-6">
       <div class="text-xl font-bold text-gray-900 capitalize">Matches</div>
-      <button
-        class="w-30 flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 hover:cursor-pointer"
-        @click="generateNextMatch"
-      >
-        Next Match
-      </button>
+      <div class="flex items-center gap-4">
+        <div class="text-red-500">{{ newMatchErrorMessage }}</div>
+        <div class="relative">
+          <div
+            class="absolute animate-ping w-full h-full bg-orange-200 top-0 left-0 rounded"
+            :class="{
+              hidden: !newMatchError,
+              block: newMatchError,
+            }"
+          ></div>
+          <button
+            class="relative w-30 flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 hover:cursor-pointer disabled:cursor-not-allowed"
+            :class="{
+              '!bg-orange-100 !text-orange-700': newMatchError,
+            }"
+            :disabled="newMatchError"
+            @click="generateNextMatch"
+          >
+            <span v-if="!newMatchError">Next Match</span>
+            <span v-else>Error</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="flex flex-col gap-4">
       <div v-for="match in tournament.matches" class="flex gap-4">
-        <table class="border-2">
+        <table class="border border-separate border-spacing-0">
           <thead class="text-center">
             <tr>
-              <td class="border-2 w-20"></td>
-              <td class="border-2 w-48"></td>
-              <td class="border-2 w-40" v-if="!isIndividual"></td>
-              <td class="border-2 w-40" colspan="2">予選一立目</td>
-              <td class="border-2 w-40" colspan="2">予選二立目</td>
+              <td class="border w-20"></td>
+              <td class="border w-48"></td>
+              <td class="border w-40" v-if="!isIndividual"></td>
+              <td class="border w-40" colspan="2">予選一立目</td>
+              <td class="border w-40" colspan="2">予選二立目</td>
             </tr>
             <tr>
-              <td class="border-2 w-20">立順</td>
-              <td class="border-2 w-48">氏名</td>
-              <td class="border-2 w-40" v-if="!isIndividual">チーム</td>
-              <td class="border-2 w-20">甲矢</td>
-              <td class="border-2 w-20">乙矢</td>
-              <td class="border-2 w-20">甲矢</td>
-              <td class="border-2 w-20">乙矢</td>
+              <td class="border w-20">立順</td>
+              <td class="border w-48">氏名</td>
+              <td class="border w-40" v-if="!isIndividual">チーム</td>
+              <td class="border w-20">甲矢</td>
+              <td class="border w-20">乙矢</td>
+              <td class="border w-20">甲矢</td>
+              <td class="border w-20">乙矢</td>
             </tr>
           </thead>
           <tbody class="text-center">
             <tr v-for="archer in getArchers(match)" :key="archer.id">
-              <td class="border-2 w-20">{{ getArcherNumber(archer) }}</td>
-              <td class="border-2 w-48">{{ archer.name }}</td>
+              <td class="border w-20">{{ getArcherNumber(archer) }}</td>
+              <td class="border w-48">{{ archer.name }}</td>
 
-              <td v-if="!isIndividual" class="border-2 w-40">{{ getArcherTeam(archer)?.name }}</td>
+              <td v-if="!isIndividual" class="border w-40">{{ getArcherTeam(archer)?.name }}</td>
               <td
-                class="border-2 w-20"
+                class="border w-20"
                 v-for="(arr, i) in getArcherSeriesArrows(match, archer)"
                 @mouseenter="mouseHoverArrow = { match: match.id, archer: archer.id, arrow: i }"
                 @mouseleave="mouseHoverArrow = null"
@@ -215,7 +240,7 @@ const deleteMatch = (matchId: number) => {
                   <div v-else class="flex justify-center items-center">{{ arrowCycleUI(arr) }}</div>
                 </div>
               </td>
-              <td class="border-2 w-20" v-for="i in remainingArrows(match, archer)">
+              <td class="border w-20" v-for="i in remainingArrows(match, archer)">
                 <div
                   class="w-full h-full flex items-center bg-blue-100 text-blue-700 font-semibold hover:cursor-pointer"
                   v-if="i == 1"
