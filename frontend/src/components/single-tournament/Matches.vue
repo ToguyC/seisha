@@ -150,6 +150,8 @@ const deleteMatch = (matchId: number) => {
 
 <template>
   <div>
+    <div class="text-3xl text-red-500 font-bold">Ajouter la création de match enkin et mort subite + les phases finales et gagnants</div>
+
     <div class="flex items-center justify-between mb-6">
       <div class="text-xl font-bold text-gray-900 capitalize">Matches</div>
       <div class="flex items-center gap-4">
