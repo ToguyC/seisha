@@ -44,6 +44,21 @@ def get_tournaments_paginated(
     )
 
 
+@router.get("/tournaments/live", response_model=list[TournamentWithEverything])
+def get_live_tournaments(
+    session: Session = Depends(get_session),
+):
+    tournaments = session.exec(
+        select(Tournament)
+        .where(Tournament.status == "live")
+        .options(selectinload(Tournament.archers))
+        .options(selectinload(Tournament.teams))
+        .order_by(Tournament.id.asc())
+    ).all()
+
+    return tournaments
+
+
 @router.get("/tournaments/{tournament_id}", response_model=TournamentWithEverything)
 def get_tournament_by_id(
     tournament_id: int,

@@ -9,6 +9,10 @@ export const getTournament = async (tournamentId: number) => {
   return api.get(`/tournaments/${tournamentId}`)
 }
 
+export const getAllLiveTournaments = async () => {
+  return api.get('/tournaments/live')
+}
+
 export const postTournament = async (tournamentInfo: Tournament) => {
   return api.post('/tournaments', tournamentInfo)
 }
