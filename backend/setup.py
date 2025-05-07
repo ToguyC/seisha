@@ -30,6 +30,7 @@ tournaments = [
         "format": "individual",
         "start_date": datetime(2025, 6, 26),
         "end_date": datetime(2025, 6, 26),
+        "advancing_count": 4,
         "target_count": 5,
         "status": "live",
     },
@@ -38,6 +39,8 @@ tournaments = [
         "format": "team",
         "start_date": datetime(2025, 6, 26),
         "end_date": datetime(2025, 6, 26),
+        "advancing_count": None,
+        "current_stage": "finals",
         "target_count": 4,
         "status": "live",
     },
@@ -88,6 +91,7 @@ matches = {
     2: [
         {
             "archers": [2, 3, 4, 1],
+            "stage": "finals",
             "finished": True,
             "series": [
                 {"archer_id": 2, "arrows": [0, 1, 1, 0]},
@@ -98,6 +102,7 @@ matches = {
         },
         {
             "archers": [6, 7],
+            "stage": "finals",
             "finished": True,
             "series": [
                 {"archer_id": 6, "arrows": [1, 0, 0, 1]},
@@ -106,7 +111,7 @@ matches = {
         },
         {
             "archers": [2, 3, 4, 1],
-            "started_at": datetime.today(),
+            "stage": "finals",
             "series": [
                 {"archer_id": 2, "arrows": [0]},
                 {"archer_id": 3, "arrows": [0]},
@@ -116,7 +121,7 @@ matches = {
         },
         {
             "archers": [6, 7],
-            "started_at": datetime.today(),
+            "stage": "finals",
             "series": [
                 {"archer_id": 6, "arrows": [1, 0, 1]},
                 {"archer_id": 7, "arrows": [1, 1]},
@@ -181,6 +186,7 @@ if __name__ == "__main__":
                 match = Match()
                 match.tournament = tournament
                 match.finished = match_data.get("finished", False)
+                match.stage = match_data.get("stage", None)
                 session.add(match)
 
                 archer_ids = match_data["archers"]

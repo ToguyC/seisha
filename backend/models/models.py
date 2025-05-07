@@ -180,6 +180,7 @@ class TournamentBase(SQLModel):
     end_date: datetime
     format: str
     current_stage: str = Field(default="qualifers")
+    advancing_count: int = Field(nullable=True, default=8)
     target_count: int = Field(default=5)
     status: str = Field(default="upcoming")
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
