@@ -151,7 +151,7 @@ const getTotalUnkowns = (match: Match, team: Team, archer: Archer) => {
 
 const matchStageName = (match: Match) => {
   switch (match.stage) {
-    case 'qualification':
+    case 'qualifers':
       return '予選'
     case 'final':
       return '決勝'

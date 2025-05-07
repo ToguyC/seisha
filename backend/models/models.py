@@ -105,7 +105,7 @@ class SeriesPublic(SeriesBase):
 
 class MatchBase(SQLModel):
     type: str = Field(default="standard")
-    stage: str = Field(default="qualification")
+    stage: str = Field(default="qualifers")
     finished: bool = Field(default=False)
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
     updated_at: datetime = Field(
@@ -173,7 +173,7 @@ class TournamentBase(SQLModel):
     start_date: datetime
     end_date: datetime
     format: str
-    current_stage: str = Field(default="qualification")
+    current_stage: str = Field(default="qualifers")
     target_count: int = Field(default=5)
     status: str = Field(default="upcoming")
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
