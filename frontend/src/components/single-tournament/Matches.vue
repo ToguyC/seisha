@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { getArrow, postArrowToMatch, putArrow, deleteMatch as _deleteMatch } from '@/api/match'
 import { postTournamentMatch } from '@/api/tournament'
-import type { Archer, Match as MatchModel, TournamentWithRelations } from '@/models/models'
-import { ArrowRightIcon, HashtagIcon, PlusIcon, TrashIcon } from '@heroicons/vue/16/solid'
-import { computed, ref } from 'vue'
+import type { Archer, Match as MatchModel, Team, TournamentWithRelations } from '@/models/models'
+import { TrashIcon } from '@heroicons/vue/16/solid'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 const { tournament } = defineProps<{
   tournament: TournamentWithRelations
@@ -20,6 +20,7 @@ const fetchTournament = () => {
 const mouseHoverArrow = ref<{ match: number; archer: number; arrow: number } | null>(null)
 const newMatchError = ref(false)
 const newMatchErrorMessage = ref('')
+const deleteMatchToggle = ref(false)
 
 const isIndividual = computed(() => {
   console.log(tournament)
@@ -85,6 +86,11 @@ const getArcherTeam = (archer: Archer) => {
   return tournament.teams.find((team) => team.archers.some((a) => a.archer.id === archer.id))
 }
 
+const getTeamSize = (archer: Archer) => {
+  const team = getArcherTeam(archer)
+  return team ? team.archers.length : 0
+}
+
 const getArchers = (match: MatchModel) => {
   if (isIndividual.value) {
     return match.archers
@@ -133,6 +139,20 @@ const setArrowState = (match: MatchModel, archer: Archer, arrowIndex: number, st
   })
 }
 
+const getTeamTotal = (team: Team, match: MatchModel) => {
+  return team.archers.reduce((total, archerWithNumber) => {
+    const series = getArcherSeriesArrows(match, archerWithNumber.archer)
+    return total + series.reduce((sum, arrow) => sum + Number(arrow === 1), 0)
+  }, 0)
+}
+
+const getTeamUnknownArrows = (team: Team, match: MatchModel) => {
+  return team.archers.reduce((total, archerWithNumber) => {
+    const series = getArcherSeriesArrows(match, archerWithNumber.archer)
+    return total + series.reduce((sum, arrow) => sum + Number(arrow === 2), 0)
+  }, 0)
+}
+
 const deleteMatch = (matchId: number) => {
   if (!confirm('Are your sure you want to delete this match?')) {
     return
@@ -141,19 +161,51 @@ const deleteMatch = (matchId: number) => {
   _deleteMatch(matchId)
     .then((res) => {
       fetchTournament()
+      deleteMatchToggle.value = false
     })
     .catch((err) => {
       console.error(err.message)
     })
 }
+
+const handleKeydown = (event: KeyboardEvent) => {
+  if (event.ctrlKey) {
+    deleteMatchToggle.value = true
+  }
+}
+
+const handleKeyup = (event: KeyboardEvent) => {
+  if (!event.ctrlKey) {
+    deleteMatchToggle.value = false
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+  window.addEventListener('keyup', handleKeyup)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+  window.removeEventListener('keyup', handleKeyup)
+})
 </script>
 
 <template>
   <div>
-    <div class="text-3xl text-red-500 font-bold">Ajouter la création de match enkin et mort subite + les phases finales et gagnants</div>
+    <div class="text-3xl text-red-500 font-bold">
+      予選順位 (classement aux qualifs)<br />Ajouter la création de match enkin et mort subite + les
+      phases finales et gagnants
+    </div>
 
     <div class="flex items-center justify-between mb-6">
-      <div class="text-xl font-bold text-gray-900 capitalize">Matches</div>
+      <div class="text-xl font-bold text-gray-900 capitalize">
+        Matches
+        <br />
+        <span class="text-sm font-normal normal-case">
+          Hold <span class="p-1 bg-gray-200 rounded">CTRL</span> to enable match deletion
+        </span>
+      </div>
       <div class="flex items-center gap-4">
         <div class="text-red-500">{{ newMatchErrorMessage }}</div>
         <div class="relative">
@@ -181,19 +233,18 @@ const deleteMatch = (matchId: number) => {
 
     <div class="flex flex-col gap-4">
       <div v-for="match in tournament.matches" class="flex gap-4">
-        <table class="border border-separate border-spacing-0">
+        <table class="w-full border border-separate border-spacing-0">
           <thead class="text-center">
             <tr>
-              <td class="border w-20"></td>
-              <td class="border w-48"></td>
-              <td class="border w-40" v-if="!isIndividual"></td>
+              <td class="border w-20" rowspan="2" v-if="!isIndividual">予選<br />立番号</td>
+              <td class="border w-32" rowspan="2" v-if="!isIndividual">チーム名</td>
+              <td class="border w-14" rowspan="2">立順</td>
+              <td class="border w-48" rowspan="2">氏名</td>
               <td class="border w-40" colspan="2">予選一立目</td>
               <td class="border w-40" colspan="2">予選二立目</td>
+              <td class="border w-16" rowspan="2" v-if="!isIndividual">合計</td>
             </tr>
             <tr>
-              <td class="border w-20">立順</td>
-              <td class="border w-48">氏名</td>
-              <td class="border w-40" v-if="!isIndividual">チーム</td>
               <td class="border w-20">甲矢</td>
               <td class="border w-20">乙矢</td>
               <td class="border w-20">甲矢</td>
@@ -201,11 +252,23 @@ const deleteMatch = (matchId: number) => {
             </tr>
           </thead>
           <tbody class="text-center">
-            <tr v-for="archer in getArchers(match)" :key="archer.id">
-              <td class="border w-20">{{ getArcherNumber(archer) }}</td>
+            <tr v-for="(archer, shajoPlace) in getArchers(match)" :key="archer.id">
+              <td
+                class="border w-20"
+                :rowspan="getTeamSize(archer)"
+                v-if="!isIndividual && getArcherNumber(archer) === 1"
+              >
+                {{ getArcherTeam(archer)?.number }}
+              </td>
+              <td
+                class="border w-32"
+                :rowspan="getTeamSize(archer)"
+                v-if="!isIndividual && getArcherNumber(archer) === 1"
+              >
+                {{ getArcherTeam(archer)?.name }}
+              </td>
+              <td class="border w-14">{{ shajoPlace + 1 }}</td>
               <td class="border w-48">{{ archer.name }}</td>
-
-              <td v-if="!isIndividual" class="border w-40">{{ getArcherTeam(archer)?.name }}</td>
               <td
                 class="border w-20"
                 v-for="(arr, i) in getArcherSeriesArrows(match, archer)"
@@ -268,6 +331,20 @@ const deleteMatch = (matchId: number) => {
                 </div>
                 <div v-else class=""></div>
               </td>
+              <td
+                class="border w-16"
+                :rowspan="getTeamSize(archer)"
+                v-if="!isIndividual && getArcherNumber(archer) === 1"
+              >
+                <div class="flex justify-center items-center gap-1">
+                  <div>
+                    {{ getTeamTotal(getArcherTeam(archer)!, match) }}
+                  </div>
+                  <div v-if="getTeamUnknownArrows(getArcherTeam(archer)!, match) > 0">
+                    ± {{ getTeamUnknownArrows(getArcherTeam(archer)!, match) }}
+                  </div>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -275,6 +352,7 @@ const deleteMatch = (matchId: number) => {
         <button
           class="w-20 flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 hover:cursor-pointer"
           @click="deleteMatch(match.id)"
+          v-if="deleteMatchToggle"
         >
           <TrashIcon class="w-5 h-5" />
         </button>
