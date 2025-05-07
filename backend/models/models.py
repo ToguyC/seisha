@@ -10,6 +10,9 @@ class ArcherTournamentLink(SQLModel, table=True):
     archer_id: int = Field(foreign_key="archer.id", primary_key=True)
     tournament_id: int = Field(foreign_key="tournament.id", primary_key=True)
     number: int = Field(nullable=False)
+    finalist: bool = Field(default=False)
+    qualifers_place: int = Field(nullable=True, default=None)
+    finals_place: int = Field(nullable=True, default=None)
 
     archer: "Archer" = Relationship(back_populates="tournaments")
     tournament: "Tournament" = Relationship(back_populates="archers")
@@ -153,6 +156,9 @@ class TeamBase(SQLModel):
 
 class Team(TeamBase, table=True):
     id: int = Field(default=None, primary_key=True)
+    finalist: bool = Field(default=False)
+    qualifers_place: int = Field(nullable=True, default=None)
+    finals_place: int = Field(nullable=True, default=None)
 
     archers: List["ArcherTeamLink"] = Relationship(
         back_populates="team", cascade_delete=True
