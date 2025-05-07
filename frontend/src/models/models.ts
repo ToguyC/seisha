@@ -8,12 +8,18 @@ export type Archer = {
 export type ArcherWithNumber = {
   archer: Archer
   number: number
+  finalist: boolean
+  qualifers_place: number
+  finals_place: number
 }
 
 export type Team = {
   id: number
   name: string
   number: number
+  finalist: boolean
+  qualifers_place: number
+  finals_place: number
   archers: ArcherWithNumber[]
 }
 
