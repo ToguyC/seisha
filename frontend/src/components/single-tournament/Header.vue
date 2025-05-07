@@ -39,14 +39,12 @@ const changeStatus = (status: string) => {
     <table class="w-full">
       <tbody>
         <tr>
-          <td class="w-40 font-semibold p-1 bg-gray-200 text-center">Start date</td>
-          <td class="px-3">{{ new Date(tournament.start_date).toLocaleDateString() }}</td>
-          <td class="w-40 font-semibold p-1 bg-gray-200 text-center">End date</td>
-          <td class="px-3">{{ new Date(tournament.end_date).toLocaleDateString() }}</td>
+          <td class="w-40 font-semibold p-1 bg-gray-200 text-center">Dates</td>
+          <td class="w-40 px-3">{{ new Date(tournament.start_date).toLocaleDateString() }} - {{ new Date(tournament.end_date).toLocaleDateString() }}</td>
           <td class="w-40 font-semibold p-1 bg-gray-200 text-center">Matos</td>
-          <td class="px-3">{{ tournament.target_count }}的</td>
+          <td class="w-40 px-3">{{ tournament.target_count }}的</td>
           <td class="w-40 font-semibold p-1 bg-gray-200 text-center">Format</td>
-          <td class="px-3">
+          <td class="w-40 px-3">
             <div
               v-if="tournament.format === 'individual'"
               class="p-1 bg-emerald-100 text-emerald-700 font-semibold w-12 rounded-sm flex items-center justify-center"
@@ -60,8 +58,10 @@ const changeStatus = (status: string) => {
               チーム
             </div>
           </td>
+          <td class="w-40 font-semibold p-1 bg-gray-200 text-center">Stage</td>
+          <td class="w-40 px-3 capitalize">{{ tournament.current_stage }}</td>
           <td class="w-40 font-semibold p-1 bg-gray-200 text-center">Status</td>
-          <td class="px-3 py-1 flex justify-between items-center">
+          <td class="w-40 px-3">
             <div
               v-if="tournament.status === 'upcoming'"
               class="p-1 bg-orange-100 text-orange-700 font-semibold w-20 rounded-sm flex items-center justify-center gap-2 hover:bg-orange-200 hover:cursor-pointer"

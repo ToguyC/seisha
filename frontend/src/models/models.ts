@@ -42,6 +42,8 @@ export type Tournament = {
   end_date: string
   format: string
   status: string
+  current_stage: string
+  advancing_count: number
   target_count: number
   created_at: string
   updated_at: string
