@@ -1,16 +1,19 @@
+import json
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 
-from ..models.models import Match, MatchWithSeries, Archer, Series
 from ..api_models import MatchArrowInput
+from ..models.models import Archer, Match, MatchWithSeries, Series
 from ..utils.sqlite import get_session
-import json
+from ..utils.ws_manager_insance import ws_instance
 
 router = APIRouter()
 
 
 @router.post("/match")
-def post_match(session: Session = Depends(get_session)):
+async def post_match(session: Session = Depends(get_session)):
     match = Match()
     session.add(match)
     session.commit()
@@ -19,7 +22,7 @@ def post_match(session: Session = Depends(get_session)):
 
 
 @router.get("/matches/{match_id}", response_model=MatchWithSeries)
-def get_match(match_id: int, session: Session = Depends(get_session)):
+async def get_match(match_id: int, session: Session = Depends(get_session)):
     match = session.get(Match, match_id)
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
@@ -31,7 +34,7 @@ def get_match(match_id: int, session: Session = Depends(get_session)):
 
 
 @router.delete("/matches/{match_id}", status_code=204)
-def delete_match(match_id: int, session: Session = Depends(get_session)):
+async def delete_match(match_id: int, session: Session = Depends(get_session)):
     match = session.get(Match, match_id)
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
@@ -41,7 +44,7 @@ def delete_match(match_id: int, session: Session = Depends(get_session)):
 
 
 @router.get("/matches/{match_id}/archers/{archer_id}/arrows/{arrow_id}")
-def get_arrow(
+async def get_arrow(
     match_id: int,
     archer_id: int,
     arrow_id: int,
@@ -74,7 +77,7 @@ def get_arrow(
 
 
 @router.post("/matches/{match_id}/archers/{archer_id}/arrows")
-def add_arrow_to_match(
+async def add_arrow_to_match(
     match_id: int,
     archer_id: int,
     data: MatchArrowInput,
@@ -106,15 +109,24 @@ def add_arrow_to_match(
         series = Series(archer_id=archer_id, match_id=match_id)
         series.arrows = new_arrow
 
+    await ws_instance.broadcast("new arrow")
+
     session.add(series)
     session.commit()
     session.refresh(series)
+    session.refresh(match)
+
+    if match.verify_finish:
+        match.finished = True
+        session.add(match)
+        session.commit()
+        await ws_instance.broadcast("match finished")
 
     return series
 
 
 @router.put("/matches/{match_id}/archers/{archer_id}/arrows/{arrow_id}")
-def update_arrow(
+async def update_arrow(
     match_id: int,
     archer_id: int,
     arrow_id: int,
@@ -148,8 +160,17 @@ def update_arrow(
     arrows[arrow_id] = data["arrow"]
     series.arrows_raw = json.dumps(arrows)
 
+    await ws_instance.broadcast("arrow update")
+
     session.add(series)
     session.commit()
     session.refresh(series)
+    session.refresh(match)
+
+    if match.verify_finish:
+        match.finished = True
+        session.add(match)
+        session.commit()
+        await ws_instance.broadcast("match finished")
 
     return series

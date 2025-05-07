@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { getArrow, postArrowToMatch, putArrow, deleteMatch as _deleteMatch } from '@/api/match'
+import { deleteMatch as _deleteMatch } from '@/api/match'
 import { postTournamentMatch } from '@/api/tournament'
-import type { Archer, Match as MatchModel, Team, TournamentWithRelations } from '@/models/models'
+import type { TournamentWithRelations } from '@/models/models'
 import { TrashIcon } from '@heroicons/vue/16/solid'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import Match from '../Match.vue'
 
 const { tournament } = defineProps<{
   tournament: TournamentWithRelations
@@ -17,24 +19,9 @@ const fetchTournament = () => {
   emit('fetchTournament', tournament.id)
 }
 
-const mouseHoverArrow = ref<{ match: number; archer: number; arrow: number } | null>(null)
 const newMatchError = ref(false)
 const newMatchErrorMessage = ref('')
 const deleteMatchToggle = ref(false)
-
-const isIndividual = computed(() => {
-  console.log(tournament)
-  return tournament.format === 'individual'
-})
-
-const isMouseHoveringCell = (match: MatchModel, archer: Archer, arrowIndex: number) => {
-  return (
-    mouseHoverArrow.value !== null &&
-    mouseHoverArrow.value.match === match.id &&
-    mouseHoverArrow.value.archer === archer.id &&
-    mouseHoverArrow.value.arrow === arrowIndex
-  )
-}
 
 const generateNextMatch = () => {
   postTournamentMatch(tournament.id)
@@ -52,105 +39,14 @@ const generateNextMatch = () => {
     })
 }
 
-const getSeriesMaxArrows = (match: MatchModel) => {
-  // TODO: need to change based on match.type (standard, enkin, mort subite).
-  // Enkin is a special case where the number of max arrows is undefined. Maybe, change the UI to have an incremental table (add a column for each arrow).
-  // Mort subite is simply 1 arrow, but I don't know the definitive match type name.
-  // For now, I will just return 4 arrows for all match types.
-  return 4
-}
+const matchContainsUnknowns = (matchId: number) => {
+  const match = tournament.matches.find((m) => m.id === matchId)
+  if (!match) return false
 
-const remainingArrows = (match: MatchModel, archer: Archer) => {
-  const seriesArrows = getArcherSeriesArrows(match, archer)
-  const maxArrows = getSeriesMaxArrows(match)
-
-  return maxArrows - seriesArrows.length
-}
-
-const getArcherNumber = (archer: Archer) => {
-  if (isIndividual.value) {
-    return tournament.archers.find((a) => a.archer.id === archer.id)?.number || 0
-  }
-
-  const team = getArcherTeam(archer)
-  return team?.archers.find((a) => a.archer.id === archer.id)?.number || 0
-}
-
-const getArcherSeriesArrows = (match: MatchModel, archer: Archer) => {
-  const series = match.series.find((s) => s.archer.id === archer.id)
-
-  return series ? (JSON.parse(series.arrows_raw) as number[]) : []
-}
-
-const getArcherTeam = (archer: Archer) => {
-  return tournament.teams.find((team) => team.archers.some((a) => a.archer.id === archer.id))
-}
-
-const getTeamSize = (archer: Archer) => {
-  const team = getArcherTeam(archer)
-  return team ? team.archers.length : 0
-}
-
-const getArchers = (match: MatchModel) => {
-  if (isIndividual.value) {
-    return match.archers
-  }
-
-  // slice() to create a shallow copy of the array, avoiding in-place sorting
-  const sortedByNumber = match.archers
-    .slice()
-    .sort((a, b) => getArcherNumber(a) - getArcherNumber(b))
-  const sortedByTeam = sortedByNumber.sort((a, b) => getArcherTeam(a)!.id - getArcherTeam(b)!.id)
-  return sortedByTeam
-}
-
-const shotArrow = (match: MatchModel, archer: Archer, state: number) => {
-  postArrowToMatch(match.id, archer.id, state)
-    .then((res) => {
-      fetchTournament()
-    })
-    .catch((err) => {
-      console.error(err.message)
-    })
-}
-
-const arrowCycleUI = (arrowState: number) => {
-  switch (arrowState) {
-    case 0:
-      return '⨉'
-    case 1:
-      return '◯'
-    case 2:
-      return '?'
-    default:
-      return ''
-  }
-}
-
-const setArrowState = (match: MatchModel, archer: Archer, arrowIndex: number, state: number) => {
-  getArrow(match.id, archer.id, arrowIndex).then((res) => {
-    putArrow(match.id, archer.id, arrowIndex, state)
-      .then((res) => {
-        fetchTournament()
-      })
-      .catch((err) => {
-        console.error(err.message)
-      })
+  return match.series.some((s) => {
+    const arrows = JSON.parse(s.arrows_raw) as number[]
+    return arrows.some((a) => a === 2)
   })
-}
-
-const getTeamTotal = (team: Team, match: MatchModel) => {
-  return team.archers.reduce((total, archerWithNumber) => {
-    const series = getArcherSeriesArrows(match, archerWithNumber.archer)
-    return total + series.reduce((sum, arrow) => sum + Number(arrow === 1), 0)
-  }, 0)
-}
-
-const getTeamUnknownArrows = (team: Team, match: MatchModel) => {
-  return team.archers.reduce((total, archerWithNumber) => {
-    const series = getArcherSeriesArrows(match, archerWithNumber.archer)
-    return total + series.reduce((sum, arrow) => sum + Number(arrow === 2), 0)
-  }, 0)
 }
 
 const deleteMatch = (matchId: number) => {
@@ -201,10 +97,6 @@ onBeforeUnmount(() => {
     <div class="flex items-center justify-between mb-6">
       <div class="text-xl font-bold text-gray-900 capitalize">
         Matches
-        <br />
-        <span class="text-sm font-normal normal-case">
-          Hold <span class="p-1 bg-gray-200 rounded">CTRL</span> to enable match deletion
-        </span>
       </div>
       <div class="flex items-center gap-4">
         <div class="text-red-500">{{ newMatchErrorMessage }}</div>
@@ -231,131 +123,27 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div class="flex flex-col gap-4">
-      <div v-for="match in tournament.matches" class="flex gap-4">
-        <table class="w-full border border-separate border-spacing-0">
-          <thead class="text-center">
-            <tr>
-              <td class="border w-20" rowspan="2" v-if="!isIndividual">予選<br />立番号</td>
-              <td class="border w-32" rowspan="2" v-if="!isIndividual">チーム名</td>
-              <td class="border w-14" rowspan="2">立順</td>
-              <td class="border w-48" rowspan="2">氏名</td>
-              <td class="border w-40" colspan="2">予選一立目</td>
-              <td class="border w-40" colspan="2">予選二立目</td>
-              <td class="border w-16" rowspan="2" v-if="!isIndividual">合計</td>
-            </tr>
-            <tr>
-              <td class="border w-20">甲矢</td>
-              <td class="border w-20">乙矢</td>
-              <td class="border w-20">甲矢</td>
-              <td class="border w-20">乙矢</td>
-            </tr>
-          </thead>
-          <tbody class="text-center">
-            <tr v-for="(archer, shajoPlace) in getArchers(match)" :key="archer.id">
-              <td
-                class="border w-20"
-                :rowspan="getTeamSize(archer)"
-                v-if="!isIndividual && getArcherNumber(archer) === 1"
-              >
-                {{ getArcherTeam(archer)?.number }}
-              </td>
-              <td
-                class="border w-32"
-                :rowspan="getTeamSize(archer)"
-                v-if="!isIndividual && getArcherNumber(archer) === 1"
-              >
-                {{ getArcherTeam(archer)?.name }}
-              </td>
-              <td class="border w-14">{{ shajoPlace + 1 }}</td>
-              <td class="border w-48">{{ archer.name }}</td>
-              <td
-                class="border w-20"
-                v-for="(arr, i) in getArcherSeriesArrows(match, archer)"
-                @mouseenter="mouseHoverArrow = { match: match.id, archer: archer.id, arrow: i }"
-                @mouseleave="mouseHoverArrow = null"
-              >
-                <div class="w-full h-full">
-                  <div
-                    class="flex bg-orange-100 text-orange-700 font-semibold hover:cursor-pointer"
-                    v-if="isMouseHoveringCell(match, archer, i)"
-                  >
-                    <div
-                      class="w-1/2 hover:bg-orange-200 hover:text-orange-800 hover:font-bold"
-                      :class="{ hidden: arr === 0 }"
-                      @click="setArrowState(match, archer, i, 0)"
-                    >
-                      ⨉
-                    </div>
-                    <div
-                      class="w-1/2 hover:bg-orange-200 hover:text-orange-800 hover:font-bold"
-                      :class="{ hidden: arr === 1 }"
-                      @click="setArrowState(match, archer, i, 1)"
-                    >
-                      ◯
-                    </div>
-                    <div
-                      class="w-1/2 hover:bg-orange-200 hover:text-orange-800 hover:font-bold"
-                      :class="{ hidden: arr === 2 }"
-                      @click="setArrowState(match, archer, i, 2)"
-                    >
-                      ?
-                    </div>
-                  </div>
-                  <div v-else class="flex justify-center items-center">{{ arrowCycleUI(arr) }}</div>
-                </div>
-              </td>
-              <td class="border w-20" v-for="i in remainingArrows(match, archer)">
-                <div
-                  class="w-full h-full flex items-center bg-blue-100 text-blue-700 font-semibold hover:cursor-pointer"
-                  v-if="i == 1"
-                >
-                  <div
-                    class="w-1/3 hover:text-blue-800 hover:bg-blue-200 hover:font-bold"
-                    @click="shotArrow(match, archer, 0)"
-                  >
-                    ⨉
-                  </div>
-                  <div
-                    class="w-1/3 hover:text-blue-800 hover:bg-blue-200 hover:font-bold"
-                    @click="shotArrow(match, archer, 1)"
-                  >
-                    ◯
-                  </div>
-                  <div
-                    class="w-1/3 hover:text-blue-800 hover:bg-blue-200 hover:font-bold"
-                    @click="shotArrow(match, archer, 2)"
-                  >
-                    ?
-                  </div>
-                </div>
-                <div v-else class=""></div>
-              </td>
-              <td
-                class="border w-16"
-                :rowspan="getTeamSize(archer)"
-                v-if="!isIndividual && getArcherNumber(archer) === 1"
-              >
-                <div class="flex justify-center items-center gap-1">
-                  <div>
-                    {{ getTeamTotal(getArcherTeam(archer)!, match) }}
-                  </div>
-                  <div v-if="getTeamUnknownArrows(getArcherTeam(archer)!, match) > 0">
-                    ± {{ getTeamUnknownArrows(getArcherTeam(archer)!, match) }}
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div class="flex flex-col divide-y divide-gray-500">
+      <div v-for="match in tournament.matches" class="py-8 gap-4 flex flex-col">
+        <div class="w-full flex justify-between items-center">
+          <div>
+            <div
+              v-if="matchContainsUnknowns(match.id)"
+              class="flex items-center gap-2 text-orange-500"
+            >
+              <ExclamationTriangleIcon class="w-5 h-5" /> Unknowns still presents
+            </div>
+          </div>
 
-        <button
-          class="w-20 flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 hover:cursor-pointer"
-          @click="deleteMatch(match.id)"
-          v-if="deleteMatchToggle"
-        >
-          <TrashIcon class="w-5 h-5" />
-        </button>
+          <button
+            class="w-20 py-2 flex items-center text-sm font-semibold justify-center bg-red-100 text-red-700 rounded hover:bg-red-200 hover:cursor-pointer"
+            @click="deleteMatch(match.id)"
+          >
+            <TrashIcon class="w-5 h-5" />
+          </button>
+        </div>
+
+        <Match :match="match" :tournament="tournament" @fetch-tournament="fetchTournament" />
       </div>
     </div>
   </div>

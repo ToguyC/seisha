@@ -12,12 +12,13 @@ from ..models.models import (
     TournamentWithEverything,
 )
 from ..utils.sqlite import get_session
+from ..utils.ws_manager_insance import ws_instance
 
 router = APIRouter()
 
 
 @router.get("/tournaments/paginate", response_model=PaginatedTournaments)
-def get_tournaments_paginated(
+async def get_tournaments_paginated(
     session: Session = Depends(get_session),
     limit: int = Query(10, ge=1, le=100),
     page: int = Query(1, ge=1),
@@ -45,14 +46,12 @@ def get_tournaments_paginated(
 
 
 @router.get("/tournaments/live", response_model=list[TournamentWithEverything])
-def get_live_tournaments(
+async def get_live_tournaments(
     session: Session = Depends(get_session),
 ):
     tournaments = session.exec(
         select(Tournament)
         .where(Tournament.status == "live")
-        .options(selectinload(Tournament.archers))
-        .options(selectinload(Tournament.teams))
         .order_by(Tournament.id.asc())
     ).all()
 
@@ -60,7 +59,7 @@ def get_live_tournaments(
 
 
 @router.get("/tournaments/{tournament_id}", response_model=TournamentWithEverything)
-def get_tournament_by_id(
+async def get_tournament_by_id(
     tournament_id: int,
     session: Session = Depends(get_session),
 ):
@@ -72,7 +71,7 @@ def get_tournament_by_id(
 
 
 @router.put("/tournaments/{tournament_id}")
-def update_tournament(
+async def update_tournament(
     tournament_id: int,
     data: TournamentInput,
     session: Session = Depends(get_session),
@@ -94,7 +93,7 @@ def update_tournament(
 
 
 @router.post("/tournaments")
-def post_tournament(data: TournamentInput, session: Session = Depends(get_session)):
+async def post_tournament(data: TournamentInput, session: Session = Depends(get_session)):
     tournament = Tournament(
         name=data.name,
         format=data.format,
@@ -110,7 +109,7 @@ def post_tournament(data: TournamentInput, session: Session = Depends(get_sessio
 
 
 @router.post("/tournaments/{tournament_id}/archers/{archer_id}")
-def add_archer_to_tournament(
+async def add_archer_to_tournament(
     tournament_id: int,
     archer_id: int,
     session: Session = Depends(get_session),
@@ -132,7 +131,7 @@ def add_archer_to_tournament(
 
 
 @router.post("/tournaments/{tournament_id}/teams")
-def add_team_to_tournament(
+async def add_team_to_tournament(
     data: TeamInput,
     tournament_id: int,
     session: Session = Depends(get_session),
@@ -265,7 +264,7 @@ def generate_team_match(session: Session, tournament: Tournament):
 @router.post(
     "/tournaments/{tournament_id}/matches", response_model=TournamentWithEverything
 )
-def add_match_to_tournament(
+async def add_match_to_tournament(
     tournament_id: int,
     session: Session = Depends(get_session),
 ):
@@ -273,7 +272,7 @@ def add_match_to_tournament(
     if not tournament:
         raise HTTPException(status_code=404, detail="Tournament not found")
 
-    if not all(m.finished for m in tournament.matches):
+    if not all(m.verify_finish for m in tournament.matches):
         raise HTTPException(
             status_code=400,
             detail="All matches must be finished before generating a new one",
@@ -287,11 +286,13 @@ def add_match_to_tournament(
         case _:
             raise HTTPException(status_code=400, detail="Invalid tournament format")
 
+    await ws_instance.broadcast("new match")
+
     return tournament
 
 
 @router.delete("/tournaments/{tournament_id}/archers/{archer_id}")
-def remove_archer_from_tournament(
+async def remove_archer_from_tournament(
     tournament_id: int,
     archer_id: int,
     session: Session = Depends(get_session),
@@ -327,7 +328,7 @@ def remove_archer_from_tournament(
 
 
 @router.delete("/tournaments/{tournament_id}")
-def delete_tournament(tournament_id: int, session: Session = Depends(get_session)):
+async def delete_tournament(tournament_id: int, session: Session = Depends(get_session)):
     tournament = session.get(Tournament, tournament_id)
     if not tournament:
         raise HTTPException(status_code=404, detail="Tournament not found")

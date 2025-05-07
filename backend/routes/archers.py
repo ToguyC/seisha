@@ -9,7 +9,7 @@ router = APIRouter()
 
 
 @router.get("/archers/paginate", response_model=PaginatedArcher)
-def get_archers_paginated(
+async def get_archers_paginated(
     session: Session = Depends(get_session),
     limit: int = Query(10, ge=1, le=100),
     page: int = Query(1, ge=1),
@@ -35,13 +35,13 @@ def get_archers_paginated(
 
 
 @router.get("/archers", response_model=list[Archer])
-def get_archers(session: Session = Depends(get_session)):
+async def get_archers(session: Session = Depends(get_session)):
     archers = session.exec(select(Archer)).all()
     return archers
 
 
 @router.post("/archers", response_model=Archer)
-def post_archer(data: ArcherInput, session: Session = Depends(get_session)):
+async def post_archer(data: ArcherInput, session: Session = Depends(get_session)):
     archer = Archer(name=data.name, position=data.position)
     session.add(archer)
     session.commit()
@@ -50,7 +50,7 @@ def post_archer(data: ArcherInput, session: Session = Depends(get_session)):
 
 
 @router.put("/archers/{archer_id}", response_model=Archer)
-def update_archer(
+async def update_archer(
     archer_id: int,
     data: ArcherInput,
     session: Session = Depends(get_session),
@@ -66,7 +66,7 @@ def update_archer(
 
 
 @router.delete("/archers/{archer_id}")
-def delete_archer(archer_id: int, session: Session = Depends(get_session)):
+async def delete_archer(archer_id: int, session: Session = Depends(get_session)):
     archer = session.get(Archer, archer_id)
     if not archer:
         raise HTTPException(status_code=404, detail="Archer not found")

@@ -9,7 +9,7 @@ router = APIRouter()
 
 
 @router.get("/teams/{team_id}", response_model=TeamWithArchers)
-def get_team(team_id: int, session: Session = Depends(get_session)):
+async def get_team(team_id: int, session: Session = Depends(get_session)):
     team = session.get(Team, team_id)
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
@@ -17,7 +17,7 @@ def get_team(team_id: int, session: Session = Depends(get_session)):
 
 
 @router.put("/teams/{team_id}")
-def update_team(
+async def update_team(
     team_id: int,
     data: TeamInput,
     session: Session = Depends(get_session),
@@ -32,7 +32,7 @@ def update_team(
 
 
 @router.post("/teams/{team_id}/archers/{archer_id}")
-def add_archer_to_team(
+async def add_archer_to_team(
     team_id: int,
     archer_id: int,
     session: Session = Depends(get_session),
@@ -54,7 +54,7 @@ def add_archer_to_team(
 
 
 @router.delete("/teams/{team_id}/archers/{archer_id}")
-def remove_archer_from_team(
+async def remove_archer_from_team(
     team_id: int,
     archer_id: int,
     session: Session = Depends(get_session),
@@ -78,26 +78,14 @@ def remove_archer_from_team(
     for link in links_to_update:
         link.number -= 1
         session.add(link)
+
     session.commit()
+    
     return {"message": "Archer removed from team"}
-    # team = session.get(Team, team_id)
-    # if not team:
-    #     raise HTTPException(status_code=404, detail="Team not found")
-
-    # archer = session.get(Archer, archer_id)
-    # if not archer:
-    #     raise HTTPException(status_code=404, detail="Archer not found")
-
-    # if archer in team.archers:
-    #     team.archers.remove(archer)
-    #     session.commit()
-    #     return {"message": "Archer removed from team"}
-    # else:
-    #     raise HTTPException(status_code=404, detail="Archer not in this team")
 
 
 @router.delete("/teams/{team_id}")
-def remove_team_from_tournament(
+async def remove_team_from_tournament(
     team_id: int,
     session: Session = Depends(get_session),
 ):

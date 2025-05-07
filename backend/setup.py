@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from models.models import (
     Archer,
@@ -31,7 +31,7 @@ tournaments = [
         "start_date": datetime(2025, 6, 26),
         "end_date": datetime(2025, 6, 26),
         "target_count": 5,
-        "status": "upcoming",
+        "status": "live",
     },
     {
         "name": "Tournoi Fun",
@@ -39,7 +39,7 @@ tournaments = [
         "start_date": datetime(2025, 6, 26),
         "end_date": datetime(2025, 6, 26),
         "target_count": 4,
-        "status": "upcoming",
+        "status": "live",
     },
 ]
 
@@ -57,6 +57,7 @@ matches = {
     1: [
         {
             "archers": [1, 2, 3, 4, 5],
+            "finished": True,
             "series": [
                 {"archer_id": 1, "arrows": [0, 1, 1, 0]},
                 {"archer_id": 2, "arrows": [1, 0, 1, 0]},
@@ -67,15 +68,27 @@ matches = {
         },
         {
             "archers": [6, 7],
+            "finished": True,
             "series": [
                 {"archer_id": 6, "arrows": [1, 0, 0, 1]},
                 {"archer_id": 7, "arrows": [0, 1, 1, 0]},
+            ],
+        },
+        {
+            "archers": [1, 2, 3, 4, 5],
+            "series": [
+                {"archer_id": 1, "arrows": [1]},
+                {"archer_id": 2, "arrows": [1]},
+                {"archer_id": 3, "arrows": [1]},
+                {"archer_id": 4, "arrows": [2]},
+                {"archer_id": 5, "arrows": [0]},
             ],
         },
     ],
     2: [
         {
             "archers": [2, 3, 4, 1],
+            "finished": True,
             "series": [
                 {"archer_id": 2, "arrows": [0, 1, 1, 0]},
                 {"archer_id": 3, "arrows": [1, 0, 1, 0]},
@@ -85,9 +98,28 @@ matches = {
         },
         {
             "archers": [6, 7],
+            "finished": True,
             "series": [
                 {"archer_id": 6, "arrows": [1, 0, 0, 1]},
                 {"archer_id": 7, "arrows": [0, 1, 1, 0]},
+            ]
+        },
+        {
+            "archers": [2, 3, 4, 1],
+            "started_at": datetime.today(),
+            "series": [
+                {"archer_id": 2, "arrows": [0]},
+                {"archer_id": 3, "arrows": [0]},
+                {"archer_id": 4, "arrows": [1]},
+                {"archer_id": 1, "arrows": [1]},
+            ]
+        },
+        {
+            "archers": [6, 7],
+            "started_at": datetime.today(),
+            "series": [
+                {"archer_id": 6, "arrows": [1, 0, 1]},
+                {"archer_id": 7, "arrows": [1, 1]},
             ]
         }
     ]
@@ -148,6 +180,7 @@ if __name__ == "__main__":
             for match_data in match_list:
                 match = Match()
                 match.tournament = tournament
+                match.finished = match_data.get("finished", False)
                 session.add(match)
 
                 archer_ids = match_data["archers"]

@@ -27,7 +27,7 @@ def get_hit_enum(value: int) -> Optional[HitEnum]:
 
 
 @router.post("/arrow")
-def post_arrow(data: ArrowInput, session: Session = Depends(get_session)):
+async def post_arrow(data: ArrowInput, session: Session = Depends(get_session)):
     # Get archer's latest series in this tournament
     series = session.exec(
         select(Series)

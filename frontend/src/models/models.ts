@@ -26,8 +26,13 @@ export type Series = {
 export type Match = {
   id: number
   type: string
+  finished: boolean
+  stage: string
   series: Series[]
   archers: Archer[]
+  started_at: string | null
+  created_at: string
+  updated_at: string
 }
 
 export type Tournament = {
@@ -38,6 +43,8 @@ export type Tournament = {
   format: string
   status: string
   target_count: number
+  created_at: string
+  updated_at: string
 }
 
 export type TournamentWithRelations = Tournament & {

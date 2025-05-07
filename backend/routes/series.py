@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 @router.get("/series/:archer_id/:tournament_id", response_model=List[Series])
-def get_series_by_archer_and_tournament(
+async def get_series_by_archer_and_tournament(
     archer_id: int,
     tournament_id: int,
     session: Session = Depends(get_session),
