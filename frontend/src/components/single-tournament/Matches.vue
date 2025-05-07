@@ -89,15 +89,112 @@ onBeforeUnmount(() => {
 
 <template>
   <div>
-    <div class="text-3xl text-red-500 font-bold">
-      予選順位 (classement aux qualifs)<br />Ajouter la création de match enkin et mort subite + les
-      phases finales et gagnants
+    <div class="text-red-500 font-bold">
+      TODO
+      <ol class="list-decimal list-inside">
+        <li class="my-2">
+          Avoir un affichage live de l'ensemble des archers/équipes comme les listes de la page d'un
+          tournoi, mais en format tableau comme un match avec le total de flèches par archer et par
+          team
+
+          <ul class="list-disc list-inside pl-4">
+            <li>
+              Créer une route pour afficher en live (comme home) un tournoi (sans nav, utilisé pour
+              un embedd)
+            </li>
+            <li>
+              Créer une route pour afficher en live (comme home) que le tableau récap d'un tournoi
+              (sans nav, utilisé pour un embedd) - Colones individuel : "numéro", "nom", "total" -
+              Colones équipe : "numéro", "nom", "archers - total" (flex-col), "total"
+            </li>
+          </ul>
+        </li>
+        <li class="my-2">
+          Bouton pour terminer les qualifs et caculer le placement (jap 予選順位) (champs
+          "qualifers_place" des tables teams et archertournamentlink)
+
+          <ul class="list-disc list-inside pl-4">
+            <li>
+              Créer le tableau récapitulatif avec placement et flèches totales (même component que
+              le tableau récap du point 1 mais avec un argument "withPlacement" - nécessaire ensuite
+              de calculer les rowspans pour les possibles égalités + trié par placement à la place
+              des numéro de participant + garder le numéro de participants)
+            </li>
+            <li>
+              Établir la liste des qualifiés et ceux qui doivent être départagé
+
+              <pre>
+      1. je groupe tout les participants par leur place aux qualifs
+      2. je parcours les groupes, et pour chaque j'effectue la vérification : place_groupe + len(groupe) <= "advancing_count"
+      3. si la vérification passe -> set "finalist" = true pour tout les participants à cette place
+      4. si la vérification ne passe pas et que je n'ai pas encore mes "advancing_count" finalistes -> ce groupe doit être départager</pre
+              >
+            </li>
+            <li>
+              Passer le champs "current_stage" du tournoi à "finals", ou "tie-breaker" si des
+              égalités ne permettant pas d'avoir clairement les "advancing_count" meilleurs
+            </li>
+          </ul>
+        </li>
+        <li class="my-2">
+          Si tie-break. La création de ces matchs ne doit prendre en compte que les participants à
+          départager.
+
+          <ul class="list-disc list-inside pl-4">
+            <li>
+              Si individuel : créer un match mort-subite (nombre de flèches inconnu). Si après un
+              certain nombre de flèches il y a toujours égalité, faire un match enkin (1 seule
+              flèche par archer).
+            </li>
+            <li>
+              Si équipe : créer un match simple. Si après un certain nombre de flèches il y a
+              toujours égalité, faire un match enkin (1 seule flèche par archer). L'archer avec la
+              flèche la plus proche du centre faire remporter son équipe.
+            </li>
+          </ul>
+
+          À ce moment, il est nécessaire de pouvoir choisir le type de match à créer (mort-subite ou
+          enkin).
+        </li>
+        <li class="my-2">
+          Bouton pour terminer le tie-break si il y a eu, et assigner les places des finalistes
+          restantes.
+        </li>
+        <li class="my-2">
+          Phase finale en élimination directe.
+
+          <ul class="list-disc list-inside pl-4">
+            <li>
+              Générer l'ordre de rencontre du bracket comme étant : 1er vs dernier, 2ème vs
+              avant-dernier, etc
+            </li>
+            <li>La création d'un match simple se fait maintenant sur cet ordre.</li>
+            <li>
+              Après chaque match, le gagnant est déterminé par le nombre de flèches marquées. En cas
+              d'égalité, le match est prolongé par un match mort-subite (nombre de flèches inconnu).
+              Si après un certain nombre de flèches il y a toujours égalité, faire un match enkin (1
+              seule flèche par archer). L'archer avec la flèche la plus proche du centre faire
+              remporter son équipe.
+            </li>
+            <li>
+              Assigner les places des participants perdants basée sur le nombre de flèches marquées
+              sur ce round.
+            </li>
+            <li>
+              Recommencer les matchs à éliminations directe en matchant comme un bracket, jusqu'à ce
+              qu'il n'en reste qu'1. Pas de match pour la 3ème place, les participants en
+              demi-finale sont 3ème.
+            </li>
+          </ul>
+        </li>
+        <li class="my-2">Avoir un affichage en brackets pour la phase finale.</li>
+        <li class="my-2">Avoir un tableau récapitulatif de la phase finale.</li>
+        <li class="my-2">Pouvoir exporter les tableaux récapitulatif des qualifs, finales, et brackets en un seul PDF (avec infos du tournoi en premier page).</li>
+      </ol>
     </div>
 
     <div class="flex items-center justify-between mb-6">
-      <div class="text-xl font-bold text-gray-900 capitalize">
-        Matches
-      </div>
+      <div class="text-xl font-bold text-gray-900 capitalize">Matches</div>
       <div class="flex items-center gap-4">
         <div class="text-red-500">{{ newMatchErrorMessage }}</div>
         <div class="relative">
