@@ -39,11 +39,11 @@ const changeStatus = (status: string) => {
     <table class="w-full">
       <tbody>
         <tr>
-          <td class="w-40 font-semibold p-1 bg-gray-200 text-center">Dates</td>
-          <td class="w-40 px-3">{{ new Date(tournament.start_date).toLocaleDateString() }} - {{ new Date(tournament.end_date).toLocaleDateString() }}</td>
-          <td class="w-40 font-semibold p-1 bg-gray-200 text-center">Matos</td>
+          <td class="w-20 font-semibold p-1 bg-gray-200 text-center">Dates</td>
+          <td class="w-48 px-3">{{ new Date(tournament.start_date).toLocaleDateString() }} - {{ new Date(tournament.end_date).toLocaleDateString() }}</td>
+          <td class="w-20 font-semibold p-1 bg-gray-200 text-center">Matos</td>
           <td class="w-40 px-3">{{ tournament.target_count }}的</td>
-          <td class="w-40 font-semibold p-1 bg-gray-200 text-center">Format</td>
+          <td class="w-20 font-semibold p-1 bg-gray-200 text-center">Format</td>
           <td class="w-40 px-3">
             <div
               v-if="tournament.format === 'individual'"
@@ -58,9 +58,9 @@ const changeStatus = (status: string) => {
               チーム
             </div>
           </td>
-          <td class="w-40 font-semibold p-1 bg-gray-200 text-center">Stage</td>
+          <td class="w-20 font-semibold p-1 bg-gray-200 text-center">Stage</td>
           <td class="w-40 px-3 capitalize">{{ tournament.current_stage }}</td>
-          <td class="w-40 font-semibold p-1 bg-gray-200 text-center">Status</td>
+          <td class="w-20 font-semibold p-1 bg-gray-200 text-center">Status</td>
           <td class="w-40 px-3">
             <div
               v-if="tournament.status === 'upcoming'"

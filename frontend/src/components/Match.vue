@@ -166,7 +166,9 @@ const matchStageName = (match: Match) => {
   <table class="w-full border border-separate border-spacing-0">
     <thead class="text-center">
       <tr>
-        <td class="border w-20" rowspan="2" v-if="!isIndividual">{{ matchStageName(match) }}<br />立番号</td>
+        <td class="border w-20" rowspan="2" v-if="!isIndividual">
+          {{ matchStageName(match) }}<br />立番号
+        </td>
         <td class="border w-32" rowspan="2" v-if="!isIndividual">チーム名</td>
         <td class="border w-14" rowspan="2">立順</td>
         <td class="border w-48" rowspan="2">氏名</td>
@@ -235,16 +237,10 @@ const matchStageName = (match: Match) => {
             <div v-else class="flex justify-center items-center">{{ arrowCycleUI(arr) }}</div>
           </div>
         </td>
-        <td
-          class="border w-20"
-          :class="{
-            'bg-gray-400': match.started_at === null,
-          }"
-          v-for="i in remainingArrows(match, archer)"
-        >
+        <td class="border w-20" v-for="i in remainingArrows(match, archer)">
           <div
             class="w-full h-full flex items-center bg-blue-100 text-blue-700 font-semibold hover:cursor-pointer"
-            v-if="i == 1 && !readonly && match.started_at !== null"
+            v-if="i == 1 && !readonly"
           >
             <div
               class="w-1/3 hover:text-blue-800 hover:bg-blue-200 hover:font-bold"

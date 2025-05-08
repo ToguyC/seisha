@@ -36,7 +36,6 @@ export type Match = {
   stage: string
   series: Series[]
   archers: Archer[]
-  started_at: string | null
   created_at: string
   updated_at: string
 }

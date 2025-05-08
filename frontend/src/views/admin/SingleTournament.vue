@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { getTournament } from '@/api/tournament'
+import { getTournament, postTournamentMatch, putTournament } from '@/api/tournament'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import ArchersList from '@/components/single-tournament/ArchersList.vue'
 import SingleTournamentHeader from '@/components/single-tournament/Header.vue'
 import Matches from '@/components/single-tournament/Matches.vue'
 import TeamsList from '@/components/single-tournament/TeamsList.vue'
 import type { TournamentWithRelations } from '@/models/models'
-import { PlusIcon } from '@heroicons/vue/16/solid'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -19,12 +18,15 @@ const tournament = ref<TournamentWithRelations>({
   end_date: '',
   format: '',
   status: '',
+  advancing_count: 0,
+  current_stage: '',
+  created_at: '',
+  updated_at: '',
   target_count: 0,
   archers: [],
   teams: [],
   matches: [],
 })
-
 const levels = ref([
   {
     name: 'Admin',
@@ -35,6 +37,8 @@ const levels = ref([
     url: '/admin/tournaments',
   },
 ])
+const tabs = ref(['Participants', 'Qualifiers', 'Finals'])
+const activeTab = ref(tabs.value[0])
 
 const fetchTournament = (tournamentId: number) => {
   getTournament(tournamentId)
@@ -46,6 +50,44 @@ const fetchTournament = (tournamentId: number) => {
         name: tournament.value.name,
         url: `/admin/tournaments/${tournamentId}`,
       })
+    })
+    .catch((err) => {
+      console.error(err.message)
+    })
+}
+
+const isTournamentOnlyFinals = (tournament: TournamentWithRelations) => {
+  return (
+    tournament.current_stage === 'finals' &&
+    tournament.matches.filter((m) => m.stage === 'qualifiers').length == 0
+  )
+}
+
+const generateNextMatch = () => {
+  postTournamentMatch(tournament.value.id)
+    .then((res) => {
+      fetchTournament(tournament.value.id)
+    })
+    .catch((err) => {
+      console.error(err.message)
+    })
+}
+
+const terminateQualifiers = () => {
+  if (
+    !confirm(
+      'Are you sure you want to terminate the qualifiers? This will end all qualifier rounds. This action cannot be undone.',
+    )
+  ) {
+    return
+  }
+
+  putTournament({
+    ...tournament.value,
+    current_stage: 'finals',
+  })
+    .then((res) => {
+      fetchTournament(tournament.value.id)
     })
     .catch((err) => {
       console.error(err.message)
@@ -72,10 +114,40 @@ onMounted(() => {
     @fetch-tournament="fetchTournament"
   />
 
-  <div class="w-full h-1 border-b border-gray-200"></div>
+  <div class="flex gap-6 w-full border-b border-gray-200">
+    <div
+      class="px-2 py-4 border-b-2 border-white text-gray-600 font-medium hover:border-b-gray-400 hover:cursor-pointer hover:text-black"
+      :class="{
+        '!border-b-amaranth-400 !text-amaranth-400': activeTab === tabs[0],
+      }"
+      @click="activeTab = tabs[0]"
+    >
+      Participants
+    </div>
+    <div
+      class="px-2 py-4 border-b-2 border-white text-gray-600 font-medium hover:border-b-gray-400 hover:cursor-pointer hover:text-black"
+      :class="{
+        '!border-b-amaranth-400 !text-amaranth-400': activeTab === tabs[1],
+      }"
+      @click="activeTab = tabs[1]"
+      v-if="!isTournamentOnlyFinals(tournament)"
+    >
+      Qualifiers
+    </div>
+    <div
+      class="px-2 py-4 border-b-2 border-white text-gray-600 font-medium hover:border-b-gray-400 hover:cursor-pointer hover:text-black"
+      :class="{
+        '!border-b-amaranth-400 !text-amaranth-400': activeTab === tabs[2],
+      }"
+      @click="activeTab = tabs[2]"
+      v-if="tournament.current_stage === 'finals'"
+    >
+      Finals
+    </div>
+  </div>
 
-  <div class="flex gap-10">
-    <div class="w-2/5 py-5">
+  <div class="flex">
+    <div class="w-full py-5" v-if="activeTab === 'Participants'">
       <ArchersList
         v-if="tournament.format === 'individual'"
         :tournament="tournament"
@@ -84,10 +156,46 @@ onMounted(() => {
       <TeamsList v-else :tournament="tournament" @fetch-tournament="fetchTournament" />
     </div>
 
-    <div class="border-r border-gray-200"></div>
+    <div class="w-full py-5" v-if="activeTab === 'Qualifiers'">
+      <div
+        class="flex justify-between items-center"
+        v-if="tournament.current_stage === 'qualifiers'"
+      >
+        <button
+          class="flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 hover:cursor-pointer"
+          @click="generateNextMatch"
+        >
+          <span>Create Next Match</span>
+        </button>
 
-    <div class="w-3/5 py-5">
-      <Matches :tournament="tournament" @fetch-tournament="fetchTournament" />
+        <button
+          class="flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 hover:cursor-pointer"
+          @click="terminateQualifiers"
+        >
+          Terminate Qualifiers
+        </button>
+      </div>
+
+      <Matches :tournament="tournament" stage="qualifiers" @fetch-tournament="fetchTournament" />
+    </div>
+
+    <div class="w-full py-5" v-if="activeTab === 'Finals'">
+      <div class="flex justify-between items-center">
+        <button
+          class="flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 hover:cursor-pointer"
+          @click="generateNextMatch"
+        >
+          <span>Create Next Match</span>
+        </button>
+
+        <button
+          class="flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 hover:cursor-pointer"
+        >
+          Terminate Tournament
+        </button>
+      </div>
+
+      <Matches :tournament="tournament" stage="finals" @fetch-tournament="fetchTournament" />
     </div>
   </div>
 </template>

@@ -11,7 +11,7 @@ class ArcherTournamentLink(SQLModel, table=True):
     tournament_id: int = Field(foreign_key="tournament.id", primary_key=True)
     number: int = Field(nullable=False)
     finalist: bool = Field(default=False)
-    qualifers_place: int = Field(nullable=True, default=None)
+    qualifiers_place: int = Field(nullable=True, default=None)
     finals_place: int = Field(nullable=True, default=None)
 
     archer: "Archer" = Relationship(back_populates="tournaments")
@@ -108,7 +108,7 @@ class SeriesPublic(SeriesBase):
 
 class MatchBase(SQLModel):
     type: str = Field(default="standard")
-    stage: str = Field(default="qualifers")
+    stage: str = Field(default="qualifiers")
     finished: bool = Field(default=False)
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
     updated_at: datetime = Field(
@@ -157,7 +157,7 @@ class TeamBase(SQLModel):
 class Team(TeamBase, table=True):
     id: int = Field(default=None, primary_key=True)
     finalist: bool = Field(default=False)
-    qualifers_place: int = Field(nullable=True, default=None)
+    qualifiers_place: int = Field(nullable=True, default=None)
     finals_place: int = Field(nullable=True, default=None)
 
     archers: List["ArcherTeamLink"] = Relationship(
@@ -179,7 +179,7 @@ class TournamentBase(SQLModel):
     start_date: datetime
     end_date: datetime
     format: str
-    current_stage: str = Field(default="qualifers")
+    current_stage: str = Field(default="qualifiers")
     advancing_count: int = Field(nullable=True, default=8)
     target_count: int = Field(default=5)
     status: str = Field(default="upcoming")

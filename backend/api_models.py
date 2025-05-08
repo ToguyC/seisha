@@ -27,6 +27,8 @@ class TournamentInput(BaseModel):
     start_date: datetime
     end_date: datetime
     status: str = "upcoming"
+    current_stage: str = "qualifiers"
+    advancing_count: int = 8
     target_count: int
 
 

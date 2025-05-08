@@ -15,8 +15,8 @@ from sqlmodel import Session, SQLModel, select
 from utils.sqlite import engine
 
 archers = [
-    {"name": "Tanguy Cavagna", "position": "zasha"},
     {"name": "Alexandre Illi", "position": "rissha"},
+    {"name": "Tanguy Cavagna", "position": "zasha"},
     {"name": "Jessica Da Silive", "position": "zasha"},
     {"name": "Sabine Bouron", "position": "zasha"},
     {"name": "Ambre Leya", "position": "zasha"},
@@ -61,6 +61,7 @@ matches = {
         {
             "archers": [1, 2, 3, 4, 5],
             "finished": True,
+            "created_at": datetime.now() - timedelta(hours=1),
             "series": [
                 {"archer_id": 1, "arrows": [0, 1, 1, 0]},
                 {"archer_id": 2, "arrows": [1, 0, 1, 0]},
@@ -72,6 +73,7 @@ matches = {
         {
             "archers": [6, 7],
             "finished": True,
+            "created_at": datetime.now() - timedelta(minutes=40),
             "series": [
                 {"archer_id": 6, "arrows": [1, 0, 0, 1]},
                 {"archer_id": 7, "arrows": [0, 1, 1, 0]},
@@ -79,12 +81,21 @@ matches = {
         },
         {
             "archers": [1, 2, 3, 4, 5],
+            "created_at": datetime.now() - timedelta(minutes=20),
             "series": [
-                {"archer_id": 1, "arrows": [1]},
-                {"archer_id": 2, "arrows": [1]},
-                {"archer_id": 3, "arrows": [1]},
-                {"archer_id": 4, "arrows": [2]},
-                {"archer_id": 5, "arrows": [0]},
+                {"archer_id": 1, "arrows": [1, 1, 1, 1]},
+                {"archer_id": 2, "arrows": [1, 0, 1, 1]},
+                {"archer_id": 3, "arrows": [1, 0, 0, 0]},
+                {"archer_id": 4, "arrows": [0, 1, 0, 1]},
+                {"archer_id": 5, "arrows": [0, 0, 1, 0]},
+            ],
+        },
+        {
+            "archers": [6, 7],
+            "created_at": datetime.now() - timedelta(minutes=10),
+            "series": [
+                {"archer_id": 6, "arrows": [0, 0, 1, 0]},
+                {"archer_id": 7, "arrows": [1, 1, 1, 1]},
             ],
         },
     ],
@@ -187,6 +198,8 @@ if __name__ == "__main__":
                 match.tournament = tournament
                 match.finished = match_data.get("finished", False)
                 match.stage = match_data.get("stage", None)
+                if match_data.get("created_at"):
+                    match.created_at = match_data["created_at"]
                 session.add(match)
 
                 archer_ids = match_data["archers"]

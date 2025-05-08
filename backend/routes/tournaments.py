@@ -85,6 +85,8 @@ async def update_tournament(
     tournament.start_date = data.start_date
     tournament.end_date = data.end_date
     tournament.status = data.status
+    tournament.current_stage = data.current_stage
+    tournament.advancing_count = data.advancing_count
     tournament.target_count = data.target_count
 
     session.commit()
@@ -183,6 +185,7 @@ def generate_individual_match(session: Session, tournament: Tournament):
 
     new_match = Match()
     new_match.tournament = tournament
+    new_match.stage = tournament.current_stage
     new_match.archers = new_match_archers
 
     session.add(new_match)
@@ -251,6 +254,7 @@ def generate_team_match(session: Session, tournament: Tournament):
 
     new_match = Match()
     new_match.tournament = tournament
+    new_match.stage = tournament.current_stage
     new_match.archers = new_match_archers
 
     session.add(new_match)
@@ -271,12 +275,6 @@ async def add_match_to_tournament(
     tournament = session.get(Tournament, tournament_id)
     if not tournament:
         raise HTTPException(status_code=404, detail="Tournament not found")
-
-    if not all(m.verify_finish for m in tournament.matches):
-        raise HTTPException(
-            status_code=400,
-            detail="All matches must be finished before generating a new one",
-        )
 
     match tournament.format:
         case "individual":
