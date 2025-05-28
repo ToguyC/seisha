@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { deleteMatch as _deleteMatch } from '@/api/match'
-import { postTournamentMatch } from '@/api/tournament'
 import type { TournamentWithRelations } from '@/models/models'
 import { TrashIcon } from '@heroicons/vue/16/solid'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 import Match from '../Match.vue'
 
 const { tournament, stage } = defineProps<{
@@ -73,6 +72,7 @@ const deleteMatch = (matchId: number) => {
         <button
           class="w-20 py-2 flex items-center text-sm font-semibold justify-center bg-red-100 text-red-700 rounded hover:bg-red-200 hover:cursor-pointer"
           @click="deleteMatch(match.id)"
+          v-if="tournament.current_stage === stage"
         >
           <TrashIcon class="w-5 h-5" />
         </button>

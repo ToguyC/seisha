@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { getTournament, postTournamentMatch, putTournament } from '@/api/tournament'
 import Breadcrumb from '@/components/Breadcrumb.vue'
+import Overview from '@/components/Overview.vue'
 import ArchersList from '@/components/single-tournament/ArchersList.vue'
 import SingleTournamentHeader from '@/components/single-tournament/Header.vue'
 import Matches from '@/components/single-tournament/Matches.vue'
@@ -176,7 +177,16 @@ onMounted(() => {
         </button>
       </div>
 
-      <Matches :tournament="tournament" stage="qualifiers" @fetch-tournament="fetchTournament" />
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col">
+          <div class="pt-8 pb-4 flex justify-between">
+            Overview
+            <div class="italic">Click on the columns to sort</div>
+          </div>
+          <Overview :tournament="tournament" stage="qualifiers" />
+        </div>
+        <Matches :tournament="tournament" stage="qualifiers" @fetch-tournament="fetchTournament" />
+      </div>
     </div>
 
     <div class="w-full py-5" v-if="activeTab === 'Finals'">
@@ -195,7 +205,16 @@ onMounted(() => {
         </button>
       </div>
 
-      <Matches :tournament="tournament" stage="finals" @fetch-tournament="fetchTournament" />
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col">
+          <div class="pt-8 pb-4 flex justify-between">
+            Overview
+            <div class="italic">Click on the highlighted columns to sort</div>
+          </div>
+          <Overview :tournament="tournament" stage="finals" />
+        </div>
+        <Matches :tournament="tournament" stage="finals" @fetch-tournament="fetchTournament" />
+      </div>
     </div>
   </div>
 </template>

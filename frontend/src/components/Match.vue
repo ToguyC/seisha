@@ -150,7 +150,6 @@ const getTotalUnkowns = (match: Match, team: Team, archer: Archer) => {
 }
 
 const matchStageName = (match: Match) => {
-  console.log(match.stage)
   switch (match.stage) {
     case 'qualifers':
       return '予選'
@@ -200,7 +199,7 @@ const matchStageName = (match: Match) => {
           {{ getArcherTeam(archer)?.name }}
         </td>
         <td class="border w-14">{{ shajoPlace + 1 }}</td>
-        <td class="border w-48">{{ archer.name }}</td>
+        <td class="border w-48 text-left pl-4">{{ archer.name }}</td>
         <td
           class="border w-20"
           v-for="(arr, i) in getArcherSeriesArrows(match, archer)"
