@@ -35,6 +35,7 @@ tournaments = [
         "advancing_count": 4,
         "target_count": 5,
         "status": "live",
+        "current_stage": "finals",
     },
     {
         "name": "Tournoi Fun",
@@ -42,7 +43,6 @@ tournaments = [
         "start_date": datetime(2025, 6, 26),
         "end_date": datetime(2025, 6, 26),
         "advancing_count": None,
-        "current_stage": "finals",
         "target_count": 4,
         "status": "live",
     },
@@ -205,8 +205,8 @@ def generate_structured_matches(num_individual_matches, num_team_matches):
         ordered_team_archers, target_count_team, num_team_matches
     )
 
-    # Add 'stage' field to team matches
-    for match in team_matches:
+    # Add 'stage' field to individual matches
+    for match in matches[1]:
         match["stage"] = "finals"
 
     matches[2] = team_matches
