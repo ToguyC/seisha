@@ -10,9 +10,9 @@ import {
   PencilSquareIcon,
   PlusIcon,
   TrashIcon,
-  UserIcon
+  UserIcon,
 } from '@heroicons/vue/16/solid'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 const levels = [
   {
@@ -39,6 +39,17 @@ const showEditModal = ref(false)
 const archerEditInfo = ref<Archer | null>(null)
 const newArcherName = ref('')
 const newArcherPosition = ref('')
+const searchArcherName = ref('')
+const searchArcherPosition = ref('none')
+
+const filteredArchers = computed(() => {
+  return pagination.value.data.filter(
+    (archer) =>
+      archer.name.toLowerCase().includes(searchArcherName.value.toLowerCase()) &&
+      (searchArcherPosition.value === 'none' ||
+        archer.position === searchArcherPosition.value.toLowerCase()),
+  )
+})
 
 const fetchPage = (page: number) => {
   getPagninatedArchers(page)
@@ -117,15 +128,18 @@ onMounted(() => {
         type="text"
         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-70 ps-10 p-2.5"
         placeholder="Search for users"
+        v-model="searchArcherName"
       />
     </div>
 
     <select
-      id="countries"
+      id="position"
       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-70 p-2.5"
+      v-model="searchArcherPosition"
     >
-      <option>坐射 (Zasha)</option>
-      <option>立射 (Rissha)</option>
+      <option value="none">Choose position</option>
+      <option value="zasha">坐射 (Zasha)</option>
+      <option value="rissha">立射 (Rissha)</option>
     </select>
   </form>
 
@@ -144,7 +158,7 @@ onMounted(() => {
       <tbody>
         <tr
           class="bg-white border-b border-gray-200 hover:bg-gray-50 hover:cursor-pointer group"
-          v-for="(archer, index) in pagination.data"
+          v-for="(archer, index) in filteredArchers"
           :key="index"
         >
           <td class="px-6 py-2 w-4 text-gray-900 whitespace-nowrap font-semibold">

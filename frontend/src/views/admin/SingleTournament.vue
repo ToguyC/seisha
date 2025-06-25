@@ -181,7 +181,7 @@ onMounted(() => {
         <div class="flex flex-col">
           <div class="pt-8 pb-4 flex justify-between">
             Overview
-            <div class="italic">Click on the columns to sort</div>
+            <div class="italic">Click on the gray columns to sort.</div>
           </div>
           <Overview :tournament="tournament" stage="qualifiers" />
         </div>
