@@ -181,7 +181,6 @@ def generate_rotating_matches(archer_list, target_count, num_matches):
                 "archers": match_archers,
                 "created_at": datetime.now() - timedelta(minutes=10 * i),
                 "series": series,
-                "finished": random.choice([True, False]),
             }
         )
 
@@ -205,11 +204,19 @@ def generate_structured_matches(num_individual_matches, num_team_matches):
         ordered_team_archers, target_count_team, num_team_matches
     )
 
+    matches[2] = team_matches
+
     # Add 'stage' field to individual matches
     for match in matches[1]:
         match["stage"] = "finals"
 
-    matches[2] = team_matches
+    # Add 'finished' field to the first 80% of matches
+    for i in range(int(0.8 * len(matches[1]))):
+        matches[1][i]["finished"] = True
+    
+    for i in range(int(0.8 * len(matches[2]))):
+        matches[2][i]["finished"] = True
+
     return matches
 
 
