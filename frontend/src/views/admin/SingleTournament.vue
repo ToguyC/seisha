@@ -179,7 +179,7 @@ onMounted(() => {
 
       <div class="grid grid-cols-2 gap-4">
         <div class="flex flex-col">
-          <div class="pt-8 pb-4 flex justify-between">
+          <div class="pt-9 mb-2 pb-4 flex justify-between">
             Overview
             <div class="italic">Click on the gray columns to sort.</div>
           </div>
@@ -207,7 +207,7 @@ onMounted(() => {
 
       <div class="grid grid-cols-2 gap-4">
         <div class="flex flex-col">
-          <div class="pt-8 pb-4 flex justify-between">
+          <div class="pt-9 mb-2 pb-4 flex justify-between">
             Overview
             <div class="italic">Click on the highlighted columns to sort</div>
           </div>
