@@ -116,13 +116,31 @@ async def add_arrow_to_match(
     session.refresh(series)
     session.refresh(match)
 
-    if match.verify_finish:
-        match.finished = True
-        session.add(match)
-        session.commit()
-        await ws_instance.broadcast("match finished")
-
     return series
+
+@router.put("/matches/{match_id}/finish")
+async def finish_match(
+    match_id: int,
+    session: Session = Depends(get_session),
+):
+    match = session.get(Match, match_id)
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+
+    if match.finished:
+        raise HTTPException(status_code=400, detail="Match already finished")
+
+    if not match.verify_finish:
+        raise HTTPException(status_code=400, detail="Match cannot be finished yet")
+    
+    match.finished = True
+    session.add(match)
+    session.commit()
+    session.refresh(match)
+
+    await ws_instance.broadcast("match finished")
+
+    return match
 
 
 @router.put("/matches/{match_id}/archers/{archer_id}/arrows/{arrow_id}")
@@ -166,11 +184,5 @@ async def update_arrow(
     session.commit()
     session.refresh(series)
     session.refresh(match)
-
-    if match.verify_finish:
-        match.finished = True
-        session.add(match)
-        session.commit()
-        await ws_instance.broadcast("match finished")
 
     return series

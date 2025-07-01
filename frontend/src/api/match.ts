@@ -30,3 +30,7 @@ export const getArrow = async (
 export const deleteMatch = async (matchId: number) => {
   return api.delete(`/matches/${matchId}`)
 }
+
+export const finishMatch = async (matchId: number) => {
+  return api.put(`/matches/${matchId}/finish`)
+}

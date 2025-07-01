@@ -205,15 +205,15 @@ onMounted(() => {
         </button>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-2 gap-4 pt-4">
         <div class="flex flex-col">
-          <div class="pt-9 mb-2 pb-4 flex justify-between">
+          <div class="mb-2 pt-4 pb-4 flex justify-between">
             Overview
             <div class="italic">Click on the highlighted columns to sort</div>
           </div>
           <Overview :tournament="tournament" stage="finals" />
         </div>
-        <Matches :tournament="tournament" stage="finals" @fetch-tournament="fetchTournament" />
+        <Matches :tournament="tournament" stage="finals" @fetch-tournament="fetchTournament" :collapsible="true" />
       </div>
     </div>
   </div>

@@ -52,6 +52,10 @@ const newTournamentInfo = ref<Tournament>({
   format: '',
   status: '',
   target_count: 0,
+  advancing_count: 0,
+  current_stage: '',
+  created_at: '',
+  updated_at: '',
 })
 const editTournamentInfo = ref<Tournament>({
   id: 0,
@@ -61,6 +65,10 @@ const editTournamentInfo = ref<Tournament>({
   format: '',
   status: '',
   target_count: 0,
+  advancing_count: 0,
+  current_stage: '',
+  created_at: '',
+  updated_at: '',
 })
 
 const fetchPage = (page: number) => {
