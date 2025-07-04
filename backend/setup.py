@@ -23,26 +23,60 @@ archers = [
     {"name": "Ambre Leya", "position": "zasha"},
     {"name": "Kazutaka Ito", "position": "zasha"},
     {"name": "Etienne Manuard", "position": "rissha"},
+    {"name": "Naoko Tanaka", "position": "rissha"},
+    {"name": "Hiroshi Sakamoto", "position": "zasha"},
+    {"name": "Clara Moreau", "position": "rissha"},
+    {"name": "Lucas Fontaine", "position": "zasha"},
+    {"name": "Marie Curie", "position": "rissha"},
+    {"name": "René Dupont", "position": "zasha"},
+    {"name": "Yuki Nakamura", "position": "zasha"},
+    {"name": "Antoine Lefèvre", "position": "rissha"},
+    {"name": "Sophie Bernard", "position": "zasha"},
+    {"name": "Kenta Fujiwara", "position": "rissha"},
+    {"name": "Lucie Garnier", "position": "zasha"},
+    {"name": "Jean-Paul Renaud", "position": "zasha"},
+    {"name": "Miyu Takahashi", "position": "rissha"},
 ]
-archers_accuracy = [0.75, 0.6, 0.4, 0.6, 0.5, 0.8, 0.6]
+archers_accuracy = [
+    0.6,
+    0.6,
+    0.6,
+    0.6,
+    0.7,
+    0.8,
+    0.6,
+    0.7,
+    0.55,
+    0.65,
+    0.75,
+    0.5,
+    0.6,
+    0.6,
+    0.68,
+    0.72,
+    0.58,
+    0.6,
+    0.62,
+    0.66,
+]
 
 tournaments = [
     {
-        "name": "月来会　第10回　定期弓道大会",
+        "name": "月来会　第10回　明弓館弓道大会",
         "format": "individual",
         "start_date": datetime(2025, 6, 26),
         "end_date": datetime(2025, 6, 26),
-        "advancing_count": 4,
+        "advancing_count": 5,
         "target_count": 5,
         "status": "live",
-        "current_stage": "finals",
+        "current_stage": "qualifiers",
     },
     {
         "name": "Tournoi Fun",
         "format": "team",
         "start_date": datetime(2025, 6, 26),
         "end_date": datetime(2025, 6, 26),
-        "advancing_count": None,
+        "advancing_count": 2,
         "target_count": 4,
         "status": "live",
     },
@@ -56,7 +90,7 @@ teams = {
     ]
 }
 
-individuals = {1: [1, 2, 3, 4, 5, 6, 7]}
+individuals = {1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]}
 
 # matches = {
 #     1: [
@@ -208,12 +242,12 @@ def generate_structured_matches(num_individual_matches, num_team_matches):
 
     # Add 'stage' field to individual matches
     for match in matches[1]:
-        match["stage"] = "finals"
+        match["stage"] = "qualifiers"
 
     # Add 'finished' field to the first 80% of matches
     for i in range(int(0.8 * len(matches[1]))):
         matches[1][i]["finished"] = True
-    
+
     for i in range(int(0.8 * len(matches[2]))):
         matches[2][i]["finished"] = True
 
@@ -268,7 +302,7 @@ if __name__ == "__main__":
                         )
                     )
 
-        for tournament_id, match_list in generate_structured_matches(10, 10).items():
+        for tournament_id, match_list in generate_structured_matches(20, 10).items():
             print(f"Processing matches for tournament ID: {tournament_id}")
             print(f"Number of matches: {len(match_list)}")
             tournament = session.get(Tournament, tournament_id)
