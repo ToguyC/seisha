@@ -6,7 +6,7 @@ import ArchersList from '@/components/single-tournament/ArchersList.vue'
 import SingleTournamentHeader from '@/components/single-tournament/Header.vue'
 import Matches from '@/components/single-tournament/Matches.vue'
 import TeamsList from '@/components/single-tournament/TeamsList.vue'
-import type { TournamentWithRelations } from '@/models/models'
+import type { Archer, ArcherWithNumber, Team, TournamentWithRelations } from '@/models/models'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -74,6 +74,37 @@ const generateNextMatch = () => {
     })
 }
 
+const getHitCount = (archer: Archer, stage: 'qualifiers' | 'finals') => {
+  const allSeries = tournament.value.matches
+    .filter((match) => match.stage === stage)
+    .flatMap((match) => match.series)
+    .filter((series) => series.archer.id === archer.id)
+
+  const { hits, total } = allSeries.reduce(
+    ({ hits, total }, series) => {
+      const arrows = JSON.parse(series.arrows_raw) as number[]
+      return { hits: hits + arrows.filter((a) => a === 1).length, total: total + arrows.length }
+    },
+    { hits: 0, total: 0 },
+  )
+
+  return [hits, total, hits / total || 0]
+}
+
+const getTeamHitCount = (team: Team, stage: 'qualifiers' | 'finals') => {
+  const { hits, total } = team.archers.reduce(
+    (acc, a) => {
+      const [archerHits, archerTotal] = getHitCount(a.archer, stage)
+      acc.hits += archerHits
+      acc.total += archerTotal
+      return acc
+    },
+    { hits: 0, total: 0 },
+  )
+
+  return [hits, total, hits / total || 0]
+}
+
 const terminateQualifiers = () => {
   if (
     !confirm(
@@ -83,16 +114,45 @@ const terminateQualifiers = () => {
     return
   }
 
-  putTournament({
-    ...tournament.value,
-    current_stage: 'finals',
-  })
-    .then((res) => {
-      fetchTournament(tournament.value.id)
-    })
-    .catch((err) => {
-      console.error(err.message)
-    })
+  // putTournament({
+  //   ...tournament.value,
+  //   current_stage: 'finals',
+  // })
+  //   .then((res) => {
+  //     fetchTournament(tournament.value.id)
+  //   })
+  //   .catch((err) => {
+  //     console.error(err.message)
+  //   })
+
+  type WithHitCount<T> = T & { hit_count: number[] }
+  let sortedParticipants: WithHitCount<Team | ArcherWithNumber>[] = []
+
+  if (tournament.value.format === 'individual') {
+    sortedParticipants = tournament.value.archers
+      .map((archer) => ({
+        ...archer,
+        hit_count: getHitCount(archer.archer, 'qualifiers'),
+      }))
+      .sort((a, b) => b.hit_count[0] - a.hit_count[0])
+  } else {
+    sortedParticipants = tournament.value.teams
+      .map((team) => ({
+        ...team,
+        hit_count: getTeamHitCount(team, 'qualifiers'),
+      }))
+      .sort((a, b) => b.hit_count[0] - a.hit_count[0])
+  }
+
+  const cutoffIndex = tournament.value.advancing_count - 1
+  const cutoffHitCount = sortedParticipants[cutoffIndex]?.hit_count[0] ?? -1
+
+  const advancingTeams = sortedParticipants.filter((p) => p.hit_count[0] >= cutoffHitCount)
+  const isTieBreakerNeeded = advancingTeams.length > tournament.value.advancing_count
+
+  console.log('Advancing Teams:', advancingTeams)
+  console.log('Advancing Count:', advancingTeams.length, '/', tournament.value.advancing_count)
+  console.log('Is Tie Breaker Needed:', isTieBreakerNeeded)
 }
 
 onMounted(() => {
@@ -177,9 +237,9 @@ onMounted(() => {
         </button>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-2 gap-4 pt-4">
         <div class="flex flex-col">
-          <div class="pt-9 mb-2 pb-4 flex justify-between">
+          <div class="pt-4 mb-2 pb-4 flex justify-between">
             Overview
             <div class="italic">Click on the gray columns to sort.</div>
           </div>
@@ -213,7 +273,12 @@ onMounted(() => {
           </div>
           <Overview :tournament="tournament" stage="finals" />
         </div>
-        <Matches :tournament="tournament" stage="finals" @fetch-tournament="fetchTournament" :collapsible="true" />
+        <Matches
+          :tournament="tournament"
+          stage="finals"
+          @fetch-tournament="fetchTournament"
+          :collapsible="true"
+        />
       </div>
     </div>
   </div>
