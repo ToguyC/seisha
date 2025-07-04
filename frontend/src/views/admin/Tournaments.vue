@@ -183,9 +183,12 @@ onMounted(() => {
               }})
             </div>
           </td>
-          <td class="px-6 py-4">
+          <td v-if="tournament.start_date !== tournament.end_date" class="px-6 py-4">
             {{ new Date(tournament.start_date).toLocaleDateString() }} -
             {{ new Date(tournament.end_date).toLocaleDateString() }}
+          </td>
+          <td v-else class="px-6 py-4">
+            {{ new Date(tournament.start_date).toLocaleDateString() }}
           </td>
           <td class="px-6 py-4">{{ tournament.target_count }}</td>
           <td class="px-6 py-4">

@@ -40,7 +40,13 @@ const changeStatus = (status: string) => {
       <tbody>
         <tr>
           <td class="w-20 font-semibold p-1 bg-gray-200 text-center">Dates</td>
-          <td class="w-48 px-3">{{ new Date(tournament.start_date).toLocaleDateString() }} - {{ new Date(tournament.end_date).toLocaleDateString() }}</td>
+          <td v-if="tournament.start_date !== tournament.end_date" class="w-48 px-3">
+            {{ new Date(tournament.start_date).toLocaleDateString() }} -
+            {{ new Date(tournament.end_date).toLocaleDateString() }}
+          </td>
+          <td v-else class="w-48 px-3">
+            {{ new Date(tournament.start_date).toLocaleDateString() }}
+          </td>
           <td class="w-20 font-semibold p-1 bg-gray-200 text-center">Matos</td>
           <td class="w-40 px-3">{{ tournament.target_count }}的</td>
           <td class="w-20 font-semibold p-1 bg-gray-200 text-center">Format</td>
