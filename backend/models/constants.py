@@ -7,8 +7,9 @@ class HitOutcome(int, Enum):
 
 class TournamentStage(str, Enum):
     QUALIFIERS = "qualifiers"
-    TIE_BREAK = "tie_break"
+    QUALIFIERS_TIE_BREAK = "qualifiers_tie_break"
     FINALS = "finals"
+    FINALS_TIE_BREAK = "finals_tie_break"
 
 
 class TournamentStatus(str, Enum):

@@ -128,16 +128,21 @@ async def next_stage(
     if not tournament:
         raise HTTPException(status_code=404, detail="Tournament not found")
 
-    if tournament.current_stage == TournamentStage.FINALS:
-        raise HTTPException(status_code=400, detail="Tournament is already in the finals stage")
-    
+    if tournament.current_stage == TournamentStage.FINALS_TIE_BREAK:
+        raise HTTPException(status_code=400, detail="Tournament is already in the finals tie-break stage")
+
     if tournament.current_stage == TournamentStage.QUALIFIERS:
         if data.tie_breaker_needed:
-            tournament.current_stage = TournamentStage.TIE_BREAK
+            tournament.current_stage = TournamentStage.QUALIFIERS_TIE_BREAK
         else:
             tournament.current_stage = TournamentStage.FINALS
-    elif tournament.current_stage == TournamentStage.TIE_BREAK:
+    elif tournament.current_stage == TournamentStage.QUALIFIERS_TIE_BREAK:
         tournament.current_stage = TournamentStage.FINALS
+    elif tournament.current_stage == TournamentStage.FINALS:
+        if data.tie_breaker_needed:
+            tournament.current_stage = TournamentStage.FINALS_TIE_BREAK
+        else:
+            tournament.status = TournamentStatus.FINISHED
 
 
 @router.post("/tournaments/{tournament_id}/archers/{archer_id}")
