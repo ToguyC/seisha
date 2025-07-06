@@ -2,7 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, func, select
 
-from ..api_models import PaginatedTournaments, TeamInput, TournamentInput
+from ..api_models import (
+    PaginatedTournaments,
+    TeamInput,
+    TournamentInput,
+    TournamentNextStageInput,
+)
 from ..models.models import (
     Archer,
     ArcherTournamentLink,
@@ -11,6 +16,7 @@ from ..models.models import (
     Tournament,
     TournamentWithEverything,
 )
+from ..models.constants import TournamentFormat, TournamentStage, TournamentStatus
 from ..utils.sqlite import get_session
 from ..utils.ws_manager_insance import ws_instance
 
@@ -51,7 +57,7 @@ async def get_live_tournaments(
 ):
     tournaments = session.exec(
         select(Tournament)
-        .where(Tournament.status == "live")
+        .where(Tournament.status == TournamentStatus.LIVE)
         .order_by(Tournament.id.asc())
     ).all()
 
@@ -95,7 +101,9 @@ async def update_tournament(
 
 
 @router.post("/tournaments")
-async def post_tournament(data: TournamentInput, session: Session = Depends(get_session)):
+async def post_tournament(
+    data: TournamentInput, session: Session = Depends(get_session)
+):
     tournament = Tournament(
         name=data.name,
         format=data.format,
@@ -108,6 +116,28 @@ async def post_tournament(data: TournamentInput, session: Session = Depends(get_
     session.commit()
     session.refresh(tournament)
     return tournament
+
+
+@router.post("/tournaments/{tournament_id}/next-stage")
+async def next_stage(
+    tournament_id: int,
+    data: TournamentNextStageInput,
+    session: Session = Depends(get_session),
+):
+    tournament = session.get(Tournament, tournament_id)
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+
+    if tournament.current_stage == TournamentStage.FINALS:
+        raise HTTPException(status_code=400, detail="Tournament is already in the finals stage")
+    
+    if tournament.current_stage == TournamentStage.QUALIFIERS:
+        if data.tie_breaker_needed:
+            tournament.current_stage = TournamentStage.TIE_BREAK
+        else:
+            tournament.current_stage = TournamentStage.FINALS
+    elif tournament.current_stage == TournamentStage.TIE_BREAK:
+        tournament.current_stage = TournamentStage.FINALS
 
 
 @router.post("/tournaments/{tournament_id}/archers/{archer_id}")
@@ -277,9 +307,9 @@ async def add_match_to_tournament(
         raise HTTPException(status_code=404, detail="Tournament not found")
 
     match tournament.format:
-        case "individual":
+        case TournamentFormat.INDIVIDUAL:
             tournament = generate_individual_match(session, tournament)
-        case "team":
+        case TournamentFormat.TEAM:
             tournament = generate_team_match(session, tournament)
         case _:
             raise HTTPException(status_code=400, detail="Invalid tournament format")
@@ -326,7 +356,9 @@ async def remove_archer_from_tournament(
 
 
 @router.delete("/tournaments/{tournament_id}")
-async def delete_tournament(tournament_id: int, session: Session = Depends(get_session)):
+async def delete_tournament(
+    tournament_id: int, session: Session = Depends(get_session)
+):
     tournament = session.get(Tournament, tournament_id)
     if not tournament:
         raise HTTPException(status_code=404, detail="Tournament not found")

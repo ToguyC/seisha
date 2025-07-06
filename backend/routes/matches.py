@@ -6,6 +6,7 @@ from sqlmodel import Session, select
 
 from ..api_models import MatchArrowInput
 from ..models.models import Archer, Match, MatchWithSeries, Series
+from ..models.constants import MatchArrows
 from ..utils.sqlite import get_session
 from ..utils.ws_manager_insance import ws_instance
 
@@ -101,8 +102,9 @@ async def add_arrow_to_match(
     ).first()
 
     new_arrow = [data.arrow]
+    arrows_per_match = MatchArrows[match.type.name]
 
-    if series and len(series.arrows) < 4:
+    if series and len(series.arrows) < arrows_per_match.value:
         new_arrows = series.arrows + new_arrow
         series.arrows_raw = json.dumps(new_arrows)
     else:

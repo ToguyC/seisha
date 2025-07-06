@@ -3,7 +3,16 @@ from datetime import datetime
 from typing import List, Optional
 
 from sqlalchemy import Column, DateTime, func
-from sqlmodel import Enum, Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
+
+from .constants import (
+    ArcherPosition,
+    HitOutcome,
+    MatchType,
+    TournamentFormat,
+    TournamentStage,
+    TournamentStatus,
+)
 
 
 class ArcherTournamentLink(SQLModel, table=True):
@@ -34,7 +43,7 @@ class ArcherMatchLink(SQLModel, table=True):
 
 class ArcherBase(SQLModel):
     name: str
-    position: str = Field(default="zasha")
+    position: ArcherPosition = Field(default=ArcherPosition.ZASHA)
     accuracy: float = Field(default=0.0)
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
     updated_at: datetime = Field(
@@ -65,12 +74,6 @@ class ArcherWithNumber(SQLModel):
     number: int = Field(nullable=False)
 
 
-class HitEnum(int, Enum):
-    miss = 0
-    hit = 1
-    ensure = 2
-
-
 class SeriesBase(SQLModel):
     arrows_raw: str
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
@@ -89,11 +92,11 @@ class Series(SeriesBase, table=True):
     match: Optional["Match"] = Relationship(back_populates="series")
 
     @property
-    def arrows(self) -> List[HitEnum]:
+    def arrows(self) -> List[HitOutcome]:
         return json.loads(self.arrows_raw)
 
     @arrows.setter
-    def arrows(self, value: List[HitEnum]):
+    def arrows(self, value: List[HitOutcome]):
         self.arrows_raw = json.dumps(value)
 
 
@@ -102,13 +105,13 @@ class SeriesPublic(SeriesBase):
     arrows_raw: str
 
     @property
-    def arrows(self) -> List[HitEnum]:
+    def arrows(self) -> List[HitOutcome]:
         return json.loads(self.arrows_raw)
 
 
 class MatchBase(SQLModel):
-    type: str = Field(default="standard")
-    stage: str = Field(default="qualifiers")
+    type: MatchType = Field(default=MatchType.STANDARD)
+    stage: TournamentStage = Field(default=TournamentStage.QUALIFIERS)
     finished: bool = Field(default=False)
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
     updated_at: datetime = Field(
@@ -130,12 +133,13 @@ class Match(MatchBase, table=True):
     @property
     def verify_finish(self) -> bool:
         match self.type:
-            case "standard":
+            case MatchType.STANDARD | MatchType.EMPEROR:
+                arrows_shot = 4 if self.type == MatchType.STANDARD else 2
+
                 finished_series = sum(
-                    1 for series in self.series if len(series.arrows) == 4
+                    1 for s in self.series if len(s.arrows) == arrows_shot
                 )
-                any_unknown = any(2 in series.arrows for series in self.series)
-                print(any_unknown)
+                any_unknown = any(HitOutcome.ENSURE in s.arrows for s in self.series)
                 return not any_unknown and finished_series == len(self.archers)
 
         return False
@@ -178,11 +182,11 @@ class TournamentBase(SQLModel):
     name: str
     start_date: datetime
     end_date: datetime
-    format: str
-    current_stage: str = Field(default="qualifiers")
+    format: TournamentFormat = Field(default=TournamentFormat.INDIVIDUAL)
+    current_stage: TournamentStage = Field(default=TournamentStage.QUALIFIERS)
     advancing_count: int = Field(nullable=True, default=8)
     target_count: int = Field(default=5)
-    status: str = Field(default="upcoming")
+    status: TournamentStatus = Field(default=TournamentStatus.UPCOMING)
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
     updated_at: datetime = Field(
         sa_column=Column(DateTime, default=func.now(), onupdate=func.now())

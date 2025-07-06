@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { getArrow, postArrowToMatch, putArrow } from '@/api/match'
+import { HitOutcome, TournamentStage } from '@/models/constants'
 import type { Archer, Match, Team, TournamentWithRelations } from '@/models/models'
 import { computed, ref } from 'vue'
 
@@ -57,7 +58,7 @@ const getArcherNumber = (archer: Archer) => {
 const getArcherSeriesArrows = (match: Match, archer: Archer) => {
   const series = match.series.find((s) => s.archer.id === archer.id)
 
-  return series ? (JSON.parse(series.arrows_raw) as number[]) : []
+  return series ? (JSON.parse(series.arrows_raw) as HitOutcome[]) : []
 }
 
 const getArcherTeam = (archer: Archer) => {
@@ -82,7 +83,7 @@ const getArchers = (match: Match) => {
   return sortedByTeam
 }
 
-const shotArrow = (match: Match, archer: Archer, state: number) => {
+const shotArrow = (match: Match, archer: Archer, state: HitOutcome) => {
   postArrowToMatch(match.id, archer.id, state)
     .then((res) => {
       fetchTournament()
@@ -92,22 +93,20 @@ const shotArrow = (match: Match, archer: Archer, state: number) => {
     })
 }
 
-const arrowCycleUI = (arrowState: number) => {
+const arrowCycleUI = (arrowState: HitOutcome) => {
   switch (arrowState) {
-    case 0:
+    case HitOutcome.MISS:
       return '⨉'
-    case 1:
+    case HitOutcome.HIT:
       return '◯'
-    case 2:
+    case HitOutcome.ENSURE:
       return '?'
-    default:
-      return ''
   }
 }
 
-const setArrowState = (match: Match, archer: Archer, arrowIndex: number, state: number) => {
+const setArrowOutcome = (match: Match, archer: Archer, arrowIndex: number, outcome: HitOutcome) => {
   getArrow(match.id, archer.id, arrowIndex).then((res) => {
-    putArrow(match.id, archer.id, arrowIndex, state)
+    putArrow(match.id, archer.id, arrowIndex, outcome)
       .then((res) => {
         fetchTournament()
       })
@@ -151,9 +150,9 @@ const getTotalUnkowns = (match: Match, team: Team, archer: Archer) => {
 
 const matchStageName = (match: Match) => {
   switch (match.stage) {
-    case 'qualifers':
+    case TournamentStage.QUALIFIERS:
       return '予選'
-    case 'finals':
+    case TournamentStage.FINALS:
       return '決勝'
     default:
       break
@@ -202,10 +201,11 @@ const matchStageName = (match: Match) => {
         <td class="border w-48 text-left pl-4">{{ archer.name }}</td>
         <td
           class="border w-20"
-          v-for="(arr, i) in getArcherSeriesArrows(match, archer)"
+          v-for="(outcome, i) in getArcherSeriesArrows(match, archer)"
           @mouseenter="mouseHoverArrow = { match: match.id, archer: archer.id, arrow: i }"
           @mouseleave="mouseHoverArrow = null"
         >
+          <!-- Hover tooltip that allows admin to change the outcome of each arrow -->
           <div class="w-full h-full">
             <div
               class="flex bg-orange-100 text-orange-700 font-semibold hover:cursor-pointer"
@@ -213,27 +213,27 @@ const matchStageName = (match: Match) => {
             >
               <div
                 class="w-1/2 hover:bg-orange-200 hover:text-orange-800 hover:font-bold"
-                :class="{ hidden: arr === 0 }"
-                @click="setArrowState(match, archer, i, 0)"
+                :class="{ hidden: outcome === HitOutcome.MISS }"
+                @click="setArrowOutcome(match, archer, i, HitOutcome.MISS)"
               >
                 ⨉
               </div>
               <div
                 class="w-1/2 hover:bg-orange-200 hover:text-orange-800 hover:font-bold"
-                :class="{ hidden: arr === 1 }"
-                @click="setArrowState(match, archer, i, 1)"
+                :class="{ hidden: outcome === HitOutcome.HIT }"
+                @click="setArrowOutcome(match, archer, i, HitOutcome.HIT)"
               >
                 ◯
               </div>
               <div
                 class="w-1/2 hover:bg-orange-200 hover:text-orange-800 hover:font-bold"
-                :class="{ hidden: arr === 2 }"
-                @click="setArrowState(match, archer, i, 2)"
+                :class="{ hidden: outcome === HitOutcome.ENSURE }"
+                @click="setArrowOutcome(match, archer, i, HitOutcome.ENSURE)"
               >
                 ?
               </div>
             </div>
-            <div v-else class="flex justify-center items-center">{{ arrowCycleUI(arr) }}</div>
+            <div v-else class="flex justify-center items-center">{{ arrowCycleUI(outcome) }}</div>
           </div>
         </td>
         <td class="border w-20" v-for="i in remainingArrows(match, archer)">
@@ -243,19 +243,19 @@ const matchStageName = (match: Match) => {
           >
             <div
               class="w-1/3 hover:text-blue-800 hover:bg-blue-200 hover:font-bold"
-              @click="shotArrow(match, archer, 0)"
+              @click="shotArrow(match, archer, HitOutcome.MISS)"
             >
               ⨉
             </div>
             <div
               class="w-1/3 hover:text-blue-800 hover:bg-blue-200 hover:font-bold"
-              @click="shotArrow(match, archer, 1)"
+              @click="shotArrow(match, archer, HitOutcome.HIT)"
             >
               ◯
             </div>
             <div
               class="w-1/3 hover:text-blue-800 hover:bg-blue-200 hover:font-bold"
-              @click="shotArrow(match, archer, 2)"
+              @click="shotArrow(match, archer, HitOutcome.ENSURE)"
             >
               ?
             </div>

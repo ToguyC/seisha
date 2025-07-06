@@ -46,23 +46,6 @@ onMounted(() => {
       TODO
       <ol class="list-decimal list-inside">
         <li class="my-2">
-          Avoir un affichage live de l'ensemble des archers/équipes comme les listes de la page d'un
-          tournoi, mais en format tableau comme un match avec le total de flèches par archer et par
-          team
-
-          <ul class="list-disc list-inside pl-4">
-            <li>
-              Créer une route pour afficher en live (comme home) un tournoi (sans nav, utilisé pour
-              un embedd)
-            </li>
-            <li>
-              Créer une route pour afficher en live (comme home) que le tableau récap d'un tournoi
-              (sans nav, utilisé pour un embedd) - Colones individuel : "numéro", "nom", "total" -
-              Colones équipe : "numéro", "nom", "archers - total" (flex-col), "total"
-            </li>
-          </ul>
-        </li>
-        <li class="my-2">
           Bouton pour terminer les qualifs et caculer le placement (jap 予選順位) (champs
           "qualifers_place" des tables teams et archertournamentlink)
 

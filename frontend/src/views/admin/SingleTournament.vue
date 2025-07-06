@@ -6,28 +6,14 @@ import ArchersList from '@/components/single-tournament/ArchersList.vue'
 import SingleTournamentHeader from '@/components/single-tournament/Header.vue'
 import Matches from '@/components/single-tournament/Matches.vue'
 import TeamsList from '@/components/single-tournament/TeamsList.vue'
+import { dummyTournamentWithRelations } from '@/models/dummy'
 import type { Archer, ArcherWithNumber, Team, TournamentWithRelations } from '@/models/models'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
-const tournament = ref<TournamentWithRelations>({
-  id: 0,
-  name: '',
-  start_date: '',
-  end_date: '',
-  format: '',
-  status: '',
-  advancing_count: 0,
-  current_stage: '',
-  created_at: '',
-  updated_at: '',
-  target_count: 0,
-  archers: [],
-  teams: [],
-  matches: [],
-})
+const tournament = ref<TournamentWithRelations>(dummyTournamentWithRelations)
 const levels = ref([
   {
     name: 'Admin',
@@ -38,7 +24,7 @@ const levels = ref([
     url: '/admin/tournaments',
   },
 ])
-const tabs = ref(['Participants', 'Qualifiers', 'Finals'])
+const tabs = ref(['Participants', 'Qualifiers', 'Tie Break', 'Finals'])
 const activeTab = ref(tabs.value[0])
 
 const fetchTournament = (tournamentId: number) => {
@@ -147,11 +133,16 @@ const terminateQualifiers = () => {
   const cutoffIndex = tournament.value.advancing_count - 1
   const cutoffHitCount = sortedParticipants[cutoffIndex]?.hit_count[0] ?? -1
 
-  const advancingTeams = sortedParticipants.filter((p) => p.hit_count[0] >= cutoffHitCount)
-  const isTieBreakerNeeded = advancingTeams.length > tournament.value.advancing_count
+  const advancingParticipants = sortedParticipants.filter((p) => p.hit_count[0] >= cutoffHitCount)
+  const isTieBreakerNeeded = advancingParticipants.length > tournament.value.advancing_count
 
-  console.log('Advancing Teams:', advancingTeams)
-  console.log('Advancing Count:', advancingTeams.length, '/', tournament.value.advancing_count)
+  console.log('Advancing Teams:', advancingParticipants)
+  console.log(
+    'Advancing Count:',
+    advancingParticipants.length,
+    '/',
+    tournament.value.advancing_count,
+  )
   console.log('Is Tie Breaker Needed:', isTieBreakerNeeded)
 }
 
@@ -194,6 +185,16 @@ onMounted(() => {
       v-if="!isTournamentOnlyFinals(tournament)"
     >
       Qualifiers
+    </div>
+    <div
+      class="px-2 py-4 border-b-2 border-white text-gray-600 font-medium hover:border-b-gray-400 hover:cursor-pointer hover:text-black"
+      :class="{
+        '!border-b-amaranth-400 !text-amaranth-400': activeTab === tabs[2],
+      }"
+      @click="activeTab = tabs[2]"
+      v-if="!isTournamentOnlyFinals(tournament) && tournament.current_stage === 'tie_break'"
+    >
+      Tie Break
     </div>
     <div
       class="px-2 py-4 border-b-2 border-white text-gray-600 font-medium hover:border-b-gray-400 hover:cursor-pointer hover:text-black"

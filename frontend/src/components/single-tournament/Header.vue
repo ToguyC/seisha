@@ -3,6 +3,7 @@ import type { Tournament } from '@/models/models'
 import { ref } from 'vue'
 import Modal from '../Modal.vue'
 import { putTournament } from '@/api/tournament'
+import { TournamentStatus } from '@/models/constants';
 
 const { tournament } = defineProps<{
   tournament: Tournament
@@ -14,7 +15,7 @@ const emit = defineEmits<{
 
 const showModal = ref(false)
 
-const changeStatus = (status: string) => {
+const changeStatus = (status: TournamentStatus) => {
   const editedTournament = {
     ...tournament,
     status: status,
@@ -106,7 +107,7 @@ const changeStatus = (status: string) => {
       <div class="w-full flex justify-around items-center gap-4">
         <div
           class="w-1/2 flex justify-center items-center gap-4 bg-red-500 rounded-md text-white p-2 uppercase font-semibold hover:bg-red-700 hover:cursor-pointer"
-          @click="changeStatus('live')"
+          @click="changeStatus(TournamentStatus.LIVE)"
           v-if="tournament.status === 'upcoming'"
         >
           <div class="w-4 h-4 rounded-full bg-white"></div>
@@ -114,21 +115,21 @@ const changeStatus = (status: string) => {
         </div>
         <div
           class="w-1/2 flex justify-center items-center gap-4 text-white bg-wedgeblue-500 rounded-md p-2 hover:bg-wedgeblue-600 hover:cursor-pointer"
-          @click="changeStatus('finished')"
+          @click="changeStatus(TournamentStatus.FINISHED)"
           v-if="tournament.status === 'live'"
         >
           Finish the event
         </div>
         <div
           class="w-1/2 flex justify-center items-center gap-4 text-white bg-gray-500 rounded-md p-2 hover:bg-gray-700 hover:cursor-pointer"
-          @click="changeStatus('upcoming')"
+          @click="changeStatus(TournamentStatus.UPCOMING)"
           v-if="tournament.status === 'finished' || tournament.status === 'cancelled'"
         >
           Reopen the tournament
         </div>
         <div
           class="w-1/2 flex justify-center items-center gap-4 text-red-500 rounded-md p-2 border border-red-500 hover:bg-red-100 hover:cursor-pointer"
-          @click="changeStatus('cancelled')"
+          @click="changeStatus(TournamentStatus.CANCELLED)"
         >
           Cancel the tournament
         </div>

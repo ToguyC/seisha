@@ -1,11 +1,12 @@
 import type { Match, Series, Tournament } from '@/models/models'
 import api from './base'
 import type { AxiosResponse } from 'axios'
+import type { HitOutcome } from '@/models/constants'
 
 export const postArrowToMatch = async (
   matchId: number,
   archerId: number,
-  state: number,
+  state: HitOutcome,
 ): Promise<AxiosResponse<Series>> => {
   return api.post(`/matches/${matchId}/archers/${archerId}/arrows`, { arrow: state })
 }
@@ -14,9 +15,9 @@ export const putArrow = async (
   matchId: number,
   archerId: number,
   arrowId: number,
-  arrowState: number,
+  arrowOutcome: HitOutcome,
 ): Promise<AxiosResponse<Series>> => {
-  return api.put(`/matches/${matchId}/archers/${archerId}/arrows/${arrowId}`, { arrow: arrowState })
+  return api.put(`/matches/${matchId}/archers/${archerId}/arrows/${arrowId}`, { arrow: arrowOutcome })
 }
 
 export const getArrow = async (
