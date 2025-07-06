@@ -7,6 +7,7 @@ import {
 } from '@/api/tournament'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Modal from '@/components/Modal.vue'
+import { dummyTournament } from '@/models/dummy'
 import type { PaginatedResponse, Tournament, TournamentWithRelations } from '@/models/models'
 import router from '@/router'
 import {
@@ -44,32 +45,8 @@ const pagination = ref<PaginatedResponse<TournamentWithRelations>>({
 const showAddModal = ref(false)
 const showEditModal = ref(false)
 
-const newTournamentInfo = ref<Tournament>({
-  id: 0,
-  name: '',
-  start_date: '',
-  end_date: '',
-  format: '',
-  status: '',
-  target_count: 0,
-  advancing_count: 0,
-  current_stage: '',
-  created_at: '',
-  updated_at: '',
-})
-const editTournamentInfo = ref<Tournament>({
-  id: 0,
-  name: '',
-  start_date: '',
-  end_date: '',
-  format: '',
-  status: '',
-  target_count: 0,
-  advancing_count: 0,
-  current_stage: '',
-  created_at: '',
-  updated_at: '',
-})
+const newTournamentInfo = ref<Tournament>(dummyTournament)
+const editTournamentInfo = ref<Tournament>(dummyTournament)
 
 const fetchPage = (page: number) => {
   getPaginatedTournaments(page)

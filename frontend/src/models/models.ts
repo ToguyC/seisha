@@ -1,16 +1,20 @@
+import type { ArcherPosition, TournamentFormat, TournamentStage, TournamentStatus } from "./constants"
+
 export type Archer = {
   id: number
   name: string
-  position: string
+  position: ArcherPosition
   accuracy: number
 }
 
-export type ArcherWithNumber = {
+export type ArcherWithTournamentData = {
   archer: Archer
   number: number
   finalist: boolean
-  qualifers_place: number
-  finals_place: number
+  qualifiers_place: number | null
+  finals_place: number | null
+  tie_break_qualifiers: boolean
+  tie_break_finals: boolean
 }
 
 export type Team = {
@@ -18,9 +22,11 @@ export type Team = {
   name: string
   number: number
   finalist: boolean
-  qualifers_place: number
-  finals_place: number
-  archers: ArcherWithNumber[]
+  qualifiers_place: number | null
+  finals_place: number | null
+  tie_break_qualifiers: boolean
+  tie_break_finals: boolean
+  archers: ArcherWithTournamentData[]
 }
 
 export type Series = {
@@ -33,7 +39,7 @@ export type Match = {
   id: number
   type: string
   finished: boolean
-  stage: string
+  stage: TournamentStage
   series: Series[]
   archers: Archer[]
   created_at: string
@@ -45,17 +51,17 @@ export type Tournament = {
   name: string
   start_date: string
   end_date: string
-  format: string
-  status: string
-  current_stage: string
-  advancing_count: number
+  format: TournamentFormat
+  status: TournamentStatus
+  current_stage: TournamentStage
+  advancing_count?: number
   target_count: number
   created_at: string
   updated_at: string
 }
 
 export type TournamentWithRelations = Tournament & {
-  archers: ArcherWithNumber[]
+  archers: ArcherWithTournamentData[]
   teams: Team[]
   matches: Match[]
 }

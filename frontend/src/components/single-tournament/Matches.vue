@@ -6,10 +6,9 @@ import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { computed, ref } from 'vue'
 import Match from '../Match.vue'
 
-const { tournament, stage, collapsible } = defineProps<{
+const { tournament, stage } = defineProps<{
   tournament: TournamentWithRelations
   stage: string
-  collapsible?: boolean
 }>()
 
 const finishedCollapsed = ref(true)
@@ -112,7 +111,7 @@ const finishMatch = (matchId: number) => {
             </div>
           </div>
 
-          <Match :match="match" :tournament="tournament" @fetch-tournament="fetchTournament" />
+          <Match :match="match" :tournament="tournament" :readonly="true" @fetch-tournament="fetchTournament" />
         </div>
       </div>
     </div>

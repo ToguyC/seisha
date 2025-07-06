@@ -17,3 +17,7 @@ export const dummyTournamentWithRelations: TournamentWithRelations = {
   teams: [],
   matches: [],
 }
+
+export const dummyTournament: Omit<TournamentWithRelations, 'archers' | 'teams' | 'matches'> = {
+  ...dummyTournamentWithRelations,
+}

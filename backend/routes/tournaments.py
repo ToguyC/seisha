@@ -7,6 +7,7 @@ from ..api_models import (
     TeamInput,
     TournamentInput,
     TournamentNextStageInput,
+    TournamentTieBreakParticipantsInput,
 )
 from ..models.models import (
     Archer,
@@ -118,7 +119,7 @@ async def post_tournament(
     return tournament
 
 
-@router.post("/tournaments/{tournament_id}/next-stage")
+@router.post("/tournaments/{tournament_id}/stage")
 async def next_stage(
     tournament_id: int,
     data: TournamentNextStageInput,
@@ -129,20 +130,110 @@ async def next_stage(
         raise HTTPException(status_code=404, detail="Tournament not found")
 
     if tournament.current_stage == TournamentStage.FINALS_TIE_BREAK:
-        raise HTTPException(status_code=400, detail="Tournament is already in the finals tie-break stage")
+        raise HTTPException(
+            status_code=400,
+            detail="Tournament is already in the finals tie-break stage",
+        )
 
-    if tournament.current_stage == TournamentStage.QUALIFIERS:
-        if data.tie_breaker_needed:
+    sorted_participants = sorted(
+        data.advancing_participants, key=lambda x: x.hit_count, reverse=True
+    )
+    least_hit_count = sorted_participants[-1].hit_count
+    tie_break_participants = [
+        participant
+        for participant in sorted_participants
+        if participant.hit_count == least_hit_count
+    ]
+    advancing_participants = [
+        participant
+        for participant in sorted_participants
+        if participant.hit_count > least_hit_count
+    ]
+
+    # Update already qualified participants
+    for participant in advancing_participants:
+        qualifiers_place = sorted_participants.index(participant) + 1
+
+        if tournament.format == TournamentFormat.INDIVIDUAL:
+            archer = session.get(ArcherTournamentLink, (participant.id, tournament_id))
+            if not archer:
+                raise HTTPException(
+                    status_code=404, detail="Archer not found for advancing"
+                )
+            archer.qualifiers_place = qualifiers_place
+            session.add(archer)
+            session.commit()
+            session.refresh(archer)
+        elif tournament.format == TournamentFormat.TEAM:
+            team = session.get(Team, participant.id)
+            if not team:
+                raise HTTPException(
+                    status_code=404, detail="Team not found for advancing"
+                )
+            team.qualifiers_place = qualifiers_place
+            session.add(team)
+            session.commit()
+            session.refresh(team)
+
+    # Handle tie-break participants
+    if data.tie_breaker_needed:
+        if tournament.current_stage == TournamentStage.QUALIFIERS:
             tournament.current_stage = TournamentStage.QUALIFIERS_TIE_BREAK
-        else:
-            tournament.current_stage = TournamentStage.FINALS
-    elif tournament.current_stage == TournamentStage.QUALIFIERS_TIE_BREAK:
-        tournament.current_stage = TournamentStage.FINALS
-    elif tournament.current_stage == TournamentStage.FINALS:
-        if data.tie_breaker_needed:
+        elif tournament.current_stage == TournamentStage.FINALS:
             tournament.current_stage = TournamentStage.FINALS_TIE_BREAK
         else:
+            raise HTTPException(
+                status_code=400, detail="Tie-break not applicable for current stage"
+            )
+
+        for participant in tie_break_participants:
+            if tournament.format == TournamentFormat.INDIVIDUAL:
+                archer = session.get(
+                    ArcherTournamentLink, (participant.id, tournament_id)
+                )
+                if not archer:
+                    raise HTTPException(
+                        status_code=404, detail="Archer not found for tie-break"
+                    )
+
+                if tournament.current_stage == TournamentStage.QUALIFIERS_TIE_BREAK:
+                    archer.tie_break_qualifiers = True
+                elif tournament.current_stage == TournamentStage.FINALS_TIE_BREAK:
+                    archer.tie_break_finals = True
+
+                session.add(archer)
+            elif tournament.format == TournamentFormat.TEAM:
+                team = session.get(Team, participant.id)
+                if not team:
+                    raise HTTPException(
+                        status_code=404, detail="Team not found for tie-break"
+                    )
+
+                if tournament.current_stage == TournamentStage.QUALIFIERS_TIE_BREAK:
+                    team.tie_break_qualifiers = True
+                elif tournament.current_stage == TournamentStage.FINALS_TIE_BREAK:
+                    team.tie_break_finals = True
+
+                session.add(team)
+    else:
+        if tournament.current_stage == TournamentStage.QUALIFIERS:
+            tournament.current_stage = TournamentStage.FINALS
+        elif tournament.current_stage == TournamentStage.FINALS:
             tournament.status = TournamentStatus.FINISHED
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot advance to next stage from current stage",
+            )
+
+    # Update tournament status
+    session.add(tournament)
+    session.commit()
+    session.refresh(tournament)
+
+    await ws_instance.broadcast("tournament stage advanced")
+
+    return tournament
 
 
 @router.post("/tournaments/{tournament_id}/archers/{archer_id}")

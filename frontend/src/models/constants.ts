@@ -1,7 +1,8 @@
 export enum TournamentStage {
   QUALIFIERS = 'qualifiers',
-  TIE_BREAK = 'tie_break',
+  QUALIFIERS_TIE_BREAK = 'qualifiers_tie_break',
   FINALS = 'finals',
+  FINALS_TIE_BREAK = 'finals_tie_break',
 }
 
 export enum TournamentStatus {

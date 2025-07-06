@@ -13,6 +13,10 @@ export const getAllLiveTournaments = async () => {
   return api.get('/tournaments/live')
 }
 
+export const getTieBreakParticipants = async (tournamentId: number) => {
+  return api.get(`/tournaments/${tournamentId}/participants/tie-break`)
+}
+
 export const postTournament = async (tournamentInfo: Tournament) => {
   return api.post('/tournaments', tournamentInfo)
 }
@@ -39,4 +43,15 @@ export const postTournamentMatch = async (tournamentId: number) => {
 
 export const deleteTournamentArcher = async (tournamentId: number, archerId: number) => {
   return api.delete(`/tournaments/${tournamentId}/archers/${archerId}`)
+}
+
+export const postTournamentStage = async (
+  tournamentId: number,
+  advancingParticipants: { id: number; hit_count: number }[],
+  tieBreakerNeeded: boolean,
+) => {
+  return api.post(`/tournaments/${tournamentId}/stage`, {
+    advancing_participants: advancingParticipants,
+    tie_breaker_needed: tieBreakerNeeded,
+  })
 }

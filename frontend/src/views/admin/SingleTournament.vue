@@ -1,15 +1,23 @@
 <script setup lang="ts">
-import { getTournament, postTournamentMatch, putTournament } from '@/api/tournament'
+import { getTournament, postTournamentMatch, postTournamentStage } from '@/api/tournament'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Overview from '@/components/Overview.vue'
 import ArchersList from '@/components/single-tournament/ArchersList.vue'
 import SingleTournamentHeader from '@/components/single-tournament/Header.vue'
 import Matches from '@/components/single-tournament/Matches.vue'
 import TeamsList from '@/components/single-tournament/TeamsList.vue'
+import { TournamentStage } from '@/models/constants'
 import { dummyTournamentWithRelations } from '@/models/dummy'
-import type { Archer, ArcherWithNumber, Team, TournamentWithRelations } from '@/models/models'
+import type {
+  Archer,
+  ArcherWithTournamentData,
+  Team,
+  TournamentWithRelations,
+} from '@/models/models'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+
+type WithHitCount<T> = T & { hit_count: number[] }
 
 const route = useRoute()
 
@@ -24,13 +32,25 @@ const levels = ref([
     url: '/admin/tournaments',
   },
 ])
-const tabs = ref(['Participants', 'Qualifiers', 'Tie Break', 'Finals'])
-const activeTab = ref(tabs.value[0])
+const tabs = ref({
+  participants: 'Participants',
+  [TournamentStage.QUALIFIERS]: 'Qualifiers',
+  [TournamentStage.QUALIFIERS_TIE_BREAK]: 'Qualifiers Tie Break',
+  [TournamentStage.FINALS]: 'Finals',
+  [TournamentStage.FINALS_TIE_BREAK]: 'Finals Tie Break',
+})
+const activeTab = ref(tabs.value[tournament.value.current_stage])
+
+const isParticipantArcher = (participant: WithHitCount<Team | ArcherWithTournamentData>) => {
+  return 'archer' in participant
+}
 
 const fetchTournament = (tournamentId: number) => {
   getTournament(tournamentId)
     .then((res) => {
+      console.log(res.data)
       tournament.value = res.data
+      activeTab.value = tabs.value[tournament.value.current_stage]
 
       levels.value = levels.value.filter((level) => level.name !== tournament.value.name)
       levels.value.push({
@@ -45,12 +65,16 @@ const fetchTournament = (tournamentId: number) => {
 
 const isTournamentOnlyFinals = (tournament: TournamentWithRelations) => {
   return (
-    tournament.current_stage === 'finals' &&
-    tournament.matches.filter((m) => m.stage === 'qualifiers').length == 0
+    tournament.current_stage === TournamentStage.FINALS &&
+    tournament.matches.filter((m) => m.stage === TournamentStage.QUALIFIERS).length == 0
   )
 }
 
 const generateNextMatch = () => {
+  const tieBreak =
+    tournament.value.current_stage === TournamentStage.QUALIFIERS_TIE_BREAK ||
+    tournament.value.current_stage === TournamentStage.FINALS_TIE_BREAK
+
   postTournamentMatch(tournament.value.id)
     .then((res) => {
       fetchTournament(tournament.value.id)
@@ -60,7 +84,7 @@ const generateNextMatch = () => {
     })
 }
 
-const getHitCount = (archer: Archer, stage: 'qualifiers' | 'finals') => {
+const getHitCount = (archer: Archer, stage: TournamentStage) => {
   const allSeries = tournament.value.matches
     .filter((match) => match.stage === stage)
     .flatMap((match) => match.series)
@@ -77,7 +101,7 @@ const getHitCount = (archer: Archer, stage: 'qualifiers' | 'finals') => {
   return [hits, total, hits / total || 0]
 }
 
-const getTeamHitCount = (team: Team, stage: 'qualifiers' | 'finals') => {
+const getTeamHitCount = (team: Team, stage: TournamentStage) => {
   const { hits, total } = team.archers.reduce(
     (acc, a) => {
       const [archerHits, archerTotal] = getHitCount(a.archer, stage)
@@ -100,50 +124,54 @@ const terminateQualifiers = () => {
     return
   }
 
-  // putTournament({
-  //   ...tournament.value,
-  //   current_stage: 'finals',
-  // })
-  //   .then((res) => {
-  //     fetchTournament(tournament.value.id)
-  //   })
-  //   .catch((err) => {
-  //     console.error(err.message)
-  //   })
-
-  type WithHitCount<T> = T & { hit_count: number[] }
-  let sortedParticipants: WithHitCount<Team | ArcherWithNumber>[] = []
+  let sortedParticipants: WithHitCount<Team | ArcherWithTournamentData>[] = []
 
   if (tournament.value.format === 'individual') {
     sortedParticipants = tournament.value.archers
       .map((archer) => ({
         ...archer,
-        hit_count: getHitCount(archer.archer, 'qualifiers'),
+        hit_count: getHitCount(archer.archer, TournamentStage.QUALIFIERS),
       }))
       .sort((a, b) => b.hit_count[0] - a.hit_count[0])
   } else {
     sortedParticipants = tournament.value.teams
       .map((team) => ({
         ...team,
-        hit_count: getTeamHitCount(team, 'qualifiers'),
+        hit_count: getTeamHitCount(team, TournamentStage.QUALIFIERS),
       }))
       .sort((a, b) => b.hit_count[0] - a.hit_count[0])
   }
 
-  const cutoffIndex = tournament.value.advancing_count - 1
+  const cutoffIndex = tournament.value.advancing_count ? tournament.value.advancing_count - 1 : -1
   const cutoffHitCount = sortedParticipants[cutoffIndex]?.hit_count[0] ?? -1
 
   const advancingParticipants = sortedParticipants.filter((p) => p.hit_count[0] >= cutoffHitCount)
-  const isTieBreakerNeeded = advancingParticipants.length > tournament.value.advancing_count
+  const isTieBreakerNeeded = advancingParticipants.length > (tournament.value.advancing_count || 0)
 
-  console.log('Advancing Teams:', advancingParticipants)
-  console.log(
-    'Advancing Count:',
-    advancingParticipants.length,
-    '/',
-    tournament.value.advancing_count,
-  )
-  console.log('Is Tie Breaker Needed:', isTieBreakerNeeded)
+  const advancingHits = advancingParticipants.map((p) => {
+    return {
+      id: isParticipantArcher(p) ? p.archer.id : p.id,
+      hit_count: p.hit_count[0],
+    }
+  })
+
+  postTournamentStage(tournament.value.id, advancingHits, isTieBreakerNeeded)
+    .then((res) => {
+      fetchTournament(tournament.value.id)
+    })
+    .catch((err) => {
+      console.error(err.message)
+    })
+}
+
+const terminateTieBreak = () => {
+  if (
+    !confirm(
+      'Are you sure you want to terminate the tie-break? This will end all tie-break rounds. This action cannot be undone.',
+    )
+  ) {
+    return
+  }
 }
 
 onMounted(() => {
@@ -170,41 +198,56 @@ onMounted(() => {
     <div
       class="px-2 py-4 border-b-2 border-white text-gray-600 font-medium hover:border-b-gray-400 hover:cursor-pointer hover:text-black"
       :class="{
-        '!border-b-amaranth-400 !text-amaranth-400': activeTab === tabs[0],
+        '!border-b-amaranth-400 !text-amaranth-400': activeTab === tabs['participants'],
       }"
-      @click="activeTab = tabs[0]"
+      @click="activeTab = tabs['participants']"
     >
-      Participants
+      {{ tabs['participants'] }}
     </div>
     <div
       class="px-2 py-4 border-b-2 border-white text-gray-600 font-medium hover:border-b-gray-400 hover:cursor-pointer hover:text-black"
       :class="{
-        '!border-b-amaranth-400 !text-amaranth-400': activeTab === tabs[1],
+        '!border-b-amaranth-400 !text-amaranth-400': activeTab === tabs[TournamentStage.QUALIFIERS],
       }"
-      @click="activeTab = tabs[1]"
+      @click="activeTab = tabs[TournamentStage.QUALIFIERS]"
       v-if="!isTournamentOnlyFinals(tournament)"
     >
-      Qualifiers
+      {{ tabs[TournamentStage.QUALIFIERS] }}
     </div>
     <div
       class="px-2 py-4 border-b-2 border-white text-gray-600 font-medium hover:border-b-gray-400 hover:cursor-pointer hover:text-black"
       :class="{
-        '!border-b-amaranth-400 !text-amaranth-400': activeTab === tabs[2],
+        '!border-b-amaranth-400 !text-amaranth-400':
+          activeTab === tabs[TournamentStage.QUALIFIERS_TIE_BREAK],
       }"
-      @click="activeTab = tabs[2]"
-      v-if="!isTournamentOnlyFinals(tournament) && tournament.current_stage === 'tie_break'"
+      @click="activeTab = tabs[TournamentStage.QUALIFIERS_TIE_BREAK]"
+      v-if="
+        !isTournamentOnlyFinals(tournament) &&
+        tournament.current_stage === TournamentStage.QUALIFIERS_TIE_BREAK
+      "
     >
-      Tie Break
+      {{ tabs[TournamentStage.QUALIFIERS_TIE_BREAK] }}
     </div>
     <div
       class="px-2 py-4 border-b-2 border-white text-gray-600 font-medium hover:border-b-gray-400 hover:cursor-pointer hover:text-black"
       :class="{
-        '!border-b-amaranth-400 !text-amaranth-400': activeTab === tabs[2],
+        '!border-b-amaranth-400 !text-amaranth-400': activeTab === tabs[TournamentStage.FINALS],
       }"
-      @click="activeTab = tabs[2]"
-      v-if="tournament.current_stage === 'finals'"
+      @click="activeTab = tabs[TournamentStage.FINALS]"
+      v-if="tournament.current_stage === TournamentStage.FINALS"
     >
-      Finals
+      {{ tabs[TournamentStage.FINALS] }}
+    </div>
+    <div
+      class="px-2 py-4 border-b-2 border-white text-gray-600 font-medium hover:border-b-gray-400 hover:cursor-pointer hover:text-black"
+      :class="{
+        '!border-b-amaranth-400 !text-amaranth-400':
+          activeTab === tabs[TournamentStage.FINALS_TIE_BREAK],
+      }"
+      @click="activeTab = tabs[TournamentStage.FINALS_TIE_BREAK]"
+      v-if="tournament.current_stage === TournamentStage.FINALS_TIE_BREAK"
+    >
+      {{ tabs[TournamentStage.FINALS_TIE_BREAK] }}
     </div>
   </div>
 
@@ -250,6 +293,42 @@ onMounted(() => {
       </div>
     </div>
 
+    <div class="w-full py-5" v-if="activeTab === 'Qualifiers Tie Break'">
+      <div
+        class="flex justify-between items-center"
+        v-if="tournament.current_stage === 'qualifiers_tie_break'"
+      >
+        <button
+          class="flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 hover:cursor-pointer"
+          @click="generateNextMatch"
+        >
+          <span>Create Next Match</span>
+        </button>
+
+        <button
+          class="flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 hover:cursor-pointer"
+          @click="terminateTieBreak"
+        >
+          Terminate Qualifiers Tie Break
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 pt-4">
+        <div class="flex flex-col">
+          <div class="pt-4 mb-2 pb-4 flex justify-between">
+            Overview
+            <div class="italic">Click on the gray columns to sort.</div>
+          </div>
+          <Overview :tournament="tournament" :stage="tournament.current_stage" />
+        </div>
+        <Matches
+          :tournament="tournament"
+          :stage="tournament.current_stage"
+          @fetch-tournament="fetchTournament"
+        />
+      </div>
+    </div>
+
     <div class="w-full py-5" v-if="activeTab === 'Finals'">
       <div class="flex justify-between items-center">
         <button
@@ -281,6 +360,10 @@ onMounted(() => {
           :collapsible="true"
         />
       </div>
+    </div>
+
+    <div class="w-full py-5" v-if="activeTab === 'Finals Tie Break'">
+      {{ tournament.archers.filter((a) => a.tie_break_finals) }}
     </div>
   </div>
 </template>

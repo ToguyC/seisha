@@ -19,9 +19,15 @@ class ArcherTournamentLink(SQLModel, table=True):
     archer_id: int = Field(foreign_key="archer.id", primary_key=True)
     tournament_id: int = Field(foreign_key="tournament.id", primary_key=True)
     number: int = Field(nullable=False)
-    finalist: bool = Field(default=False)
-    qualifiers_place: int = Field(nullable=True, default=None)
-    finals_place: int = Field(nullable=True, default=None)
+    qualifiers_place: int | None = Field(nullable=True, default=None)
+    finals_place: int | None = Field(nullable=True, default=None)
+
+    tie_break_qualifiers: bool = Field(
+        default=False, description="True if tie-break was needed after qualifiers"
+    )
+    tie_break_finals: bool = Field(
+        default=False, description="True if tie-break was needed after finals"
+    )
 
     archer: "Archer" = Relationship(back_populates="tournaments")
     tournament: "Tournament" = Relationship(back_populates="archers")
@@ -69,9 +75,19 @@ class ArcherPublic(ArcherBase):
     accuracy: float
 
 
-class ArcherWithNumber(SQLModel):
+class ArcherWithTournamentData(SQLModel):
     archer: ArcherPublic
     number: int = Field(nullable=False)
+    finalist: bool = Field(default=False)
+    qualifiers_place: int | None = Field(nullable=True, default=None)
+    finals_place: int | None = Field(nullable=True, default=None)
+
+    tie_break_qualifiers: bool = Field(
+        default=False, description="True if tie-break was needed after qualifiers"
+    )
+    tie_break_finals: bool = Field(
+        default=False, description="True if tie-break was needed after finals"
+    )
 
 
 class SeriesBase(SQLModel):
@@ -164,6 +180,13 @@ class Team(TeamBase, table=True):
     qualifiers_place: int = Field(nullable=True, default=None)
     finals_place: int = Field(nullable=True, default=None)
 
+    tie_break_qualifiers: bool = Field(
+        default=False, description="True if tie-break was needed after qualifiers"
+    )
+    tie_break_finals: bool = Field(
+        default=False, description="True if tie-break was needed after finals"
+    )
+
     archers: List["ArcherTeamLink"] = Relationship(
         back_populates="team", cascade_delete=True
     )
@@ -184,7 +207,7 @@ class TournamentBase(SQLModel):
     end_date: datetime
     format: TournamentFormat = Field(default=TournamentFormat.INDIVIDUAL)
     current_stage: TournamentStage = Field(default=TournamentStage.QUALIFIERS)
-    advancing_count: int = Field(nullable=True, default=8)
+    advancing_count: int | None = Field(nullable=True, default=8)
     target_count: int = Field(default=5)
     status: TournamentStatus = Field(default=TournamentStatus.UPCOMING)
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
@@ -222,7 +245,7 @@ class MatchWithSeries(MatchPublic):
 
 
 class TeamWithArchers(TeamPublic):
-    archers: List[ArcherWithNumber] = []
+    archers: List[ArcherWithTournamentData] = []
 
 
 class TournamentWithArchers(TournamentPublic):
@@ -234,14 +257,14 @@ class TournamentWithMatchesAndTeams(TournamentWithArchers):
 
 
 class TournamentWithArchersAndTeams(TournamentWithMatchesAndTeams):
-    archers: List[ArcherWithNumber] = []
+    archers: List[ArcherWithTournamentData] = []
     teams: List[TeamWithArchers] = []
 
 
 class TournamentWithEverything(TournamentPublic):
     matches: List[MatchWithSeries] = []
     teams: List[TeamWithArchers] = []
-    archers: List[ArcherWithNumber] = []
+    archers: List[ArcherWithTournamentData] = []
 
 
 class ArcherWithTournaments(ArcherPublic):

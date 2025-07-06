@@ -76,9 +76,10 @@ tournaments = [
         "format": "team",
         "start_date": datetime(2025, 6, 26),
         "end_date": datetime(2025, 6, 26),
-        "advancing_count": 2,
+        "advancing_count": None,
         "target_count": 4,
         "status": "live",
+        "current_stage": "finals",
     },
 ]
 
@@ -241,8 +242,8 @@ def generate_structured_matches(num_individual_matches, num_team_matches):
     matches[2] = team_matches
 
     # Add 'stage' field to individual matches
-    for match in matches[1]:
-        match["stage"] = "qualifiers"
+    for match in matches[2]:
+        match["stage"] = "finals"
 
     # Add 'finished' field to the first 80% of matches
     for i in range(int(0.8 * len(matches[1]))):

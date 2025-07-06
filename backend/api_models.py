@@ -1,13 +1,10 @@
 from datetime import datetime
-from typing import List
+from typing import Dict, List
 
 from pydantic import BaseModel
 
-from .models.models import (
-    TournamentWithArchersAndTeams,
-    ArcherPublic,
-)
-from .models.constants import TournamentStage, TournamentStatus
+from .models.constants import ArcherPosition, TournamentStage, TournamentStatus
+from .models.models import ArcherPublic, TournamentWithArchersAndTeams
 
 
 class ArrowInput(BaseModel):
@@ -58,11 +55,18 @@ class PaginatedArcher(Paginated):
 
 class ArcherSearchInput(BaseModel):
     name: str = ""
-    position: str = "zasha"
+    position: ArcherPosition = ArcherPosition.ZASHA
+
+
+class AdvancingParticipant(BaseModel):
+    id: int
+    hit_count: int
 
 
 class TournamentNextStageInput(BaseModel):
-    advancing_participants_ids: List[
-        int
-    ]  # List of IDs of participants advancing to the next stage. Archer's IDs if individual, Team's IDs if team tournament.
+    advancing_participants: List[AdvancingParticipant]
     tie_breaker_needed: bool = False
+
+
+class TournamentTieBreakParticipantsInput(BaseModel):
+    stage: TournamentStage
