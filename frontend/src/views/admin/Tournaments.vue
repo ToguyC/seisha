@@ -7,6 +7,7 @@ import {
 } from '@/api/tournament'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Modal from '@/components/Modal.vue'
+import { TournamentStageName, TournamentStatus } from '@/models/constants'
 import { dummyTournament } from '@/models/dummy'
 import type { PaginatedResponse, Tournament, TournamentWithRelations } from '@/models/models'
 import router from '@/router'
@@ -131,6 +132,7 @@ onMounted(() => {
           <th class="px-6 py-3"><HashtagIcon class="w-4 h-4" /></th>
           <th class="px-6 py-3">Name</th>
           <th class="px-6 py-3">Participant count</th>
+          <th class="px-6 py-3">Stage</th>
           <th class="px-6 py-3">Date</th>
           <th class="px-6 py-3">Matos</th>
           <th class="px-6 py-3">Format</th>
@@ -159,6 +161,13 @@ onMounted(() => {
                 tournament.teams.reduce((acc, team) => acc + team.archers.length, 0)
               }})
             </div>
+          </td>
+          <td class="px-6 py-4 capitalize">
+            {{
+              tournament.status === TournamentStatus.LIVE
+                ? TournamentStageName[tournament.current_stage]
+                : 'N/A'
+            }}
           </td>
           <td v-if="tournament.start_date !== tournament.end_date" class="px-6 py-4">
             {{ new Date(tournament.start_date).toLocaleDateString() }} -

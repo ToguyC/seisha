@@ -5,6 +5,13 @@ export enum TournamentStage {
   FINALS_TIE_BREAK = 'finals_tie_break',
 }
 
+export enum TournamentStageName {
+  qualifiers = 'Qualifiers',
+  qualifiers_tie_break = 'Qualifiers Tie Break',
+  finals = 'Finals',
+  finals_tie_break = 'Finals Tie Break',
+}
+
 export enum TournamentStatus {
   UPCOMING = 'upcoming',
   LIVE = 'live',

@@ -3,7 +3,7 @@ import type { Tournament } from '@/models/models'
 import { ref } from 'vue'
 import Modal from '../Modal.vue'
 import { putTournament } from '@/api/tournament'
-import { TournamentStatus } from '@/models/constants';
+import { TournamentStageName, TournamentStatus } from '@/models/constants';
 
 const { tournament } = defineProps<{
   tournament: Tournament
@@ -66,7 +66,7 @@ const changeStatus = (status: TournamentStatus) => {
             </div>
           </td>
           <td class="w-20 font-semibold p-1 bg-gray-200 text-center">Stage</td>
-          <td class="w-40 px-3 capitalize">{{ tournament.current_stage }}</td>
+          <td class="w-40 px-3 capitalize">{{ TournamentStageName[tournament.current_stage] }}</td>
           <td class="w-20 font-semibold p-1 bg-gray-200 text-center">Status</td>
           <td class="w-40 px-3">
             <div

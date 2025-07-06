@@ -6,7 +6,7 @@ import ArchersList from '@/components/single-tournament/ArchersList.vue'
 import SingleTournamentHeader from '@/components/single-tournament/Header.vue'
 import Matches from '@/components/single-tournament/Matches.vue'
 import TeamsList from '@/components/single-tournament/TeamsList.vue'
-import { TournamentStage } from '@/models/constants'
+import { TournamentStage, TournamentStageName } from '@/models/constants'
 import { dummyTournamentWithRelations } from '@/models/dummy'
 import type {
   Archer,
@@ -34,12 +34,12 @@ const levels = ref([
 ])
 const tabs = ref({
   participants: 'Participants',
-  [TournamentStage.QUALIFIERS]: 'Qualifiers',
-  [TournamentStage.QUALIFIERS_TIE_BREAK]: 'Qualifiers Tie Break',
-  [TournamentStage.FINALS]: 'Finals',
-  [TournamentStage.FINALS_TIE_BREAK]: 'Finals Tie Break',
+  [TournamentStage.QUALIFIERS]: TournamentStageName.qualifiers,
+  [TournamentStage.QUALIFIERS_TIE_BREAK]: TournamentStageName.qualifiers_tie_break,
+  [TournamentStage.FINALS]: TournamentStageName.finals,
+  [TournamentStage.FINALS_TIE_BREAK]: TournamentStageName.finals_tie_break,
 })
-const activeTab = ref(tabs.value[tournament.value.current_stage])
+const activeTab = ref<string>(tabs.value[tournament.value.current_stage])
 
 const isParticipantArcher = (participant: WithHitCount<Team | ArcherWithTournamentData>) => {
   return 'archer' in participant
