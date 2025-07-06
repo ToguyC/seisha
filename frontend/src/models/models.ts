@@ -10,7 +10,6 @@ export type Archer = {
 export type ArcherWithTournamentData = {
   archer: Archer
   number: number
-  finalist: boolean
   qualifiers_place: number | null
   finals_place: number | null
   tie_break_qualifiers: boolean
@@ -21,7 +20,6 @@ export type Team = {
   id: number
   name: string
   number: number
-  finalist: boolean
   qualifiers_place: number | null
   finals_place: number | null
   tie_break_qualifiers: boolean

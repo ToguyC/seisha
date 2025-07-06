@@ -78,7 +78,6 @@ class ArcherPublic(ArcherBase):
 class ArcherWithTournamentData(SQLModel):
     archer: ArcherPublic
     number: int = Field(nullable=False)
-    finalist: bool = Field(default=False)
     qualifiers_place: int | None = Field(nullable=True, default=None)
     finals_place: int | None = Field(nullable=True, default=None)
 
@@ -176,7 +175,6 @@ class TeamBase(SQLModel):
 
 class Team(TeamBase, table=True):
     id: int = Field(default=None, primary_key=True)
-    finalist: bool = Field(default=False)
     qualifiers_place: int = Field(nullable=True, default=None)
     finals_place: int = Field(nullable=True, default=None)
 

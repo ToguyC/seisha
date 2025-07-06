@@ -46,33 +46,6 @@ onMounted(() => {
       TODO
       <ol class="list-decimal list-inside">
         <li class="my-2">
-          Bouton pour terminer les qualifs et caculer le placement (jap 予選順位) (champs
-          "qualifers_place" des tables teams et archertournamentlink)
-
-          <ul class="list-disc list-inside pl-4">
-            <li>
-              Créer le tableau récapitulatif avec placement et flèches totales (même component que
-              le tableau récap du point 1 mais avec un argument "withPlacement" - nécessaire ensuite
-              de calculer les rowspans pour les possibles égalités + trié par placement à la place
-              des numéro de participant + garder le numéro de participants)
-            </li>
-            <li>
-              Établir la liste des qualifiés et ceux qui doivent être départagé
-
-              <pre>
-      1. je groupe tout les participants par leur place aux qualifs
-      2. je parcours les groupes, et pour chaque j'effectue la vérification : place_groupe + len(groupe) <= "advancing_count"
-      3. si la vérification passe -> set "finalist" = true pour tout les participants à cette place
-      4. si la vérification ne passe pas et que je n'ai pas encore mes "advancing_count" finalistes -> ce groupe doit être départager</pre
-              >
-            </li>
-            <li>
-              Passer le champs "current_stage" du tournoi à "finals", ou "tie-breaker" si des
-              égalités ne permettant pas d'avoir clairement les "advancing_count" meilleurs
-            </li>
-          </ul>
-        </li>
-        <li class="my-2">
           Si tie-break. La création de ces matchs ne doit prendre en compte que les participants à
           départager.
 
