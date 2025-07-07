@@ -6,7 +6,12 @@ import ArchersList from '@/components/single-tournament/ArchersList.vue'
 import SingleTournamentHeader from '@/components/single-tournament/Header.vue'
 import Matches from '@/components/single-tournament/Matches.vue'
 import TeamsList from '@/components/single-tournament/TeamsList.vue'
-import { TournamentStage, TournamentStageName, TournamentStatus } from '@/models/constants'
+import {
+  MatchFormat,
+  TournamentStage,
+  TournamentStageName,
+  TournamentStatus,
+} from '@/models/constants'
 import { dummyTournamentWithRelations } from '@/models/dummy'
 import type {
   Archer,
@@ -40,6 +45,7 @@ const tabs = ref({
   [TournamentStage.FINALS_TIE_BREAK]: TournamentStageName.finals_tie_break,
 })
 const activeTab = ref<string>(tabs.value[tournament.value.current_stage])
+const useEnkin = ref<boolean>(false)
 
 const isParticipantArcher = (participant: WithHitCount<Team | ArcherWithTournamentData>) => {
   return 'archer' in participant
@@ -48,8 +54,8 @@ const isParticipantArcher = (participant: WithHitCount<Team | ArcherWithTourname
 const fetchTournament = (tournamentId: number) => {
   getTournament(tournamentId)
     .then((res) => {
-      console.log(res.data)
       tournament.value = res.data
+      console.log('Fetched tournament:', tournament.value)
 
       if (tournament.value.status !== TournamentStatus.UPCOMING) {
         activeTab.value = tabs.value[tournament.value.current_stage]
@@ -74,7 +80,20 @@ const isTournamentOnlyFinals = (tournament: TournamentWithRelations) => {
 }
 
 const generateNextMatch = () => {
-  postTournamentMatch(tournament.value.id)
+  let matchFormat = MatchFormat.STANDARD
+
+  if (
+    tournament.value.current_stage === TournamentStage.QUALIFIERS_TIE_BREAK ||
+    tournament.value.current_stage === TournamentStage.FINALS_TIE_BREAK
+  ) {
+    matchFormat = MatchFormat.IZUME
+  }
+
+  if (useEnkin.value) {
+    matchFormat = MatchFormat.ENKIN
+  }
+
+  postTournamentMatch(tournament.value.id, matchFormat)
     .then((res) => {
       fetchTournament(tournament.value.id)
     })

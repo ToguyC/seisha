@@ -102,7 +102,7 @@ async def add_arrow_to_match(
     ).first()
 
     new_arrow = [data.arrow]
-    arrows_per_match = MatchArrows[match.type.name]
+    arrows_per_match = MatchArrows[match.format.name]
 
     if series and len(series.arrows) < arrows_per_match.value:
         new_arrows = series.arrows + new_arrow

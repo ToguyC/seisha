@@ -51,12 +51,12 @@ const getArcherNumber = (archer: ArcherWithTournamentData) => {
 
 const getArchers = () => {
   const filterParticipants = (p: ArcherWithTournamentData | Team) => {
-    if (stage === TournamentStage.QUALIFIERS || tournament.advancing_count === undefined) {
+    if (stage === TournamentStage.QUALIFIERS || tournament.advancing_count === null) {
       return true
     } else if (stage === TournamentStage.QUALIFIERS_TIE_BREAK) {
       return p.tie_break_qualifiers
     } else if (stage === TournamentStage.FINALS) {
-      return p.qualifiers_place !== undefined
+      return p.qualifiers_place !== null
     } else if (stage === TournamentStage.FINALS_TIE_BREAK) {
       return p.tie_break_finals
     }

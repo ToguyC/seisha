@@ -8,7 +8,7 @@ from sqlmodel import Field, Relationship, SQLModel
 from .constants import (
     ArcherPosition,
     HitOutcome,
-    MatchType,
+    MatchFormat,
     TournamentFormat,
     TournamentStage,
     TournamentStatus,
@@ -125,7 +125,7 @@ class SeriesPublic(SeriesBase):
 
 
 class MatchBase(SQLModel):
-    type: MatchType = Field(default=MatchType.STANDARD)
+    format: MatchFormat = Field(default=MatchFormat.STANDARD)
     stage: TournamentStage = Field(default=TournamentStage.QUALIFIERS)
     finished: bool = Field(default=False)
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
@@ -147,9 +147,9 @@ class Match(MatchBase, table=True):
 
     @property
     def verify_finish(self) -> bool:
-        match self.type:
-            case MatchType.STANDARD | MatchType.EMPEROR:
-                arrows_shot = 4 if self.type == MatchType.STANDARD else 2
+        match self.format:
+            case MatchFormat.STANDARD | MatchFormat.EMPEROR:
+                arrows_shot = 4 if self.format == MatchFormat.STANDARD else 2
 
                 finished_series = sum(
                     1 for s in self.series if len(s.arrows) == arrows_shot
@@ -209,7 +209,7 @@ class TournamentBase(SQLModel):
     end_date: datetime
     format: TournamentFormat = Field(default=TournamentFormat.INDIVIDUAL)
     current_stage: TournamentStage = Field(default=TournamentStage.QUALIFIERS)
-    advancing_count: int | None = Field(nullable=True, default=8)
+    advancing_count: int | None = Field(nullable=True)
     target_count: int = Field(default=5)
     status: TournamentStatus = Field(default=TournamentStatus.UPCOMING)
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))

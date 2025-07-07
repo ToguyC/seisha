@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import Dict, List
+from typing import List
 
 from pydantic import BaseModel
 
-from .models.constants import ArcherPosition, TournamentStage, TournamentStatus
+from .models.constants import ArcherPosition, TournamentStage, TournamentStatus, MatchFormat
 from .models.models import ArcherPublic, TournamentWithArchersAndTeams
 
 
@@ -70,3 +70,7 @@ class TournamentNextStageInput(BaseModel):
 
 class TournamentTieBreakParticipantsInput(BaseModel):
     stage: TournamentStage
+
+
+class TournamentTieBreakFormatInput(BaseModel):
+    format: MatchFormat

@@ -1,5 +1,6 @@
 import type { Tournament } from '@/models/models'
 import api from './base'
+import type { MatchFormat } from '@/models/constants'
 
 export const getPaginatedTournaments = async (page: number, limit: number = 10) => {
   return api.get(`/tournaments/paginate?page=${page}&limit=${limit}`)
@@ -37,8 +38,8 @@ export const postTournamentArcher = async (tournamentId: number, archerId: numbe
   return api.post(`/tournaments/${tournamentId}/archers/${archerId}`)
 }
 
-export const postTournamentMatch = async (tournamentId: number) => {
-  return api.post(`/tournaments/${tournamentId}/matches`)
+export const postTournamentMatch = async (tournamentId: number, matchFormat: MatchFormat) => {
+  return api.post(`/tournaments/${tournamentId}/matches`, { format: matchFormat })
 }
 
 export const deleteTournamentArcher = async (tournamentId: number, archerId: number) => {

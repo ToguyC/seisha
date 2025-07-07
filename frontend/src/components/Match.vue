@@ -3,6 +3,8 @@ import { getArrow, postArrowToMatch, putArrow } from '@/api/match'
 import { HitOutcome, TournamentStage } from '@/models/constants'
 import type { Archer, Match, Team, TournamentWithRelations } from '@/models/models'
 import { computed, ref } from 'vue'
+import ArrowIndicator from '@/components/matches/ArrowIndicator.vue'
+import NewArrow from './matches/NewArrow.vue'
 
 const { match, tournament, readonly } = defineProps<{
   match: Match
@@ -21,21 +23,7 @@ const fetchTournament = () => {
   emit('fetchTournament', tournament.id)
 }
 
-const isMouseHoveringCell = (match: Match, archer: Archer, arrowIndex: number) => {
-  return (
-    !readonly &&
-    mouseHoverArrow.value !== null &&
-    mouseHoverArrow.value.match === match.id &&
-    mouseHoverArrow.value.archer === archer.id &&
-    mouseHoverArrow.value.arrow === arrowIndex
-  )
-}
-
 const getSeriesMaxArrows = (match: Match) => {
-  // TODO: need to change based on match.type (standard, enkin, mort subite).
-  // Enkin is a special case where the number of max arrows is undefined. Maybe, change the UI to have an incremental table (add a column for each arrow).
-  // Mort subite is simply 1 arrow, but I don't know the definitive match type name.
-  // For now, I will just return 4 arrows for all match types.
   return 4
 }
 
@@ -91,17 +79,6 @@ const shotArrow = (match: Match, archer: Archer, state: HitOutcome) => {
     .catch((err) => {
       console.error(err.message)
     })
-}
-
-const arrowCycleUI = (arrowState: HitOutcome) => {
-  switch (arrowState) {
-    case HitOutcome.MISS:
-      return '⨉'
-    case HitOutcome.HIT:
-      return '◯'
-    case HitOutcome.ENSURE:
-      return '?'
-  }
 }
 
 const setArrowOutcome = (match: Match, archer: Archer, arrowIndex: number, outcome: HitOutcome) => {
@@ -205,62 +182,24 @@ const matchStageName = (match: Match) => {
           @mouseenter="mouseHoverArrow = { match: match.id, archer: archer.id, arrow: i }"
           @mouseleave="mouseHoverArrow = null"
         >
-          <!-- Hover tooltip that allows admin to change the outcome of each arrow -->
-          <div class="w-full h-full">
-            <div
-              class="flex bg-orange-100 text-orange-700 font-semibold hover:cursor-pointer"
-              v-if="isMouseHoveringCell(match, archer, i)"
-            >
-              <div
-                class="w-1/2 hover:bg-orange-200 hover:text-orange-800 hover:font-bold"
-                :class="{ hidden: outcome === HitOutcome.MISS }"
-                @click="setArrowOutcome(match, archer, i, HitOutcome.MISS)"
-              >
-                ⨉
-              </div>
-              <div
-                class="w-1/2 hover:bg-orange-200 hover:text-orange-800 hover:font-bold"
-                :class="{ hidden: outcome === HitOutcome.HIT }"
-                @click="setArrowOutcome(match, archer, i, HitOutcome.HIT)"
-              >
-                ◯
-              </div>
-              <div
-                class="w-1/2 hover:bg-orange-200 hover:text-orange-800 hover:font-bold"
-                :class="{ hidden: outcome === HitOutcome.ENSURE }"
-                @click="setArrowOutcome(match, archer, i, HitOutcome.ENSURE)"
-              >
-                ?
-              </div>
-            </div>
-            <div v-else class="flex justify-center items-center">{{ arrowCycleUI(outcome) }}</div>
-          </div>
+          <ArrowIndicator
+            :match="match"
+            :archer="archer"
+            :arrowNumber="i"
+            :outcome="outcome"
+            :readonly="readonly"
+            :mouseHoverArrow="mouseHoverArrow"
+            @setArrowOutcome="setArrowOutcome"
+          ></ArrowIndicator>
         </td>
-        <td class="border w-20" v-for="i in remainingArrows(match, archer)">
-          <div
-            class="w-full h-full flex items-center bg-blue-100 text-blue-700 font-semibold hover:cursor-pointer"
-            v-if="i == 1 && !readonly"
-          >
-            <div
-              class="w-1/3 hover:text-blue-800 hover:bg-blue-200 hover:font-bold"
-              @click="shotArrow(match, archer, HitOutcome.MISS)"
-            >
-              ⨉
-            </div>
-            <div
-              class="w-1/3 hover:text-blue-800 hover:bg-blue-200 hover:font-bold"
-              @click="shotArrow(match, archer, HitOutcome.HIT)"
-            >
-              ◯
-            </div>
-            <div
-              class="w-1/3 hover:text-blue-800 hover:bg-blue-200 hover:font-bold"
-              @click="shotArrow(match, archer, HitOutcome.ENSURE)"
-            >
-              ?
-            </div>
-          </div>
+        <td class="border w-20" v-if="!readonly && remainingArrows(match, archer) > 0">
+          <NewArrow :match="match" :archer="archer" @shotArrow="shotArrow"></NewArrow>
         </td>
+        <td
+          class="border w-20"
+          v-if="remainingArrows(match, archer) > 0"
+          v-for="_ in remainingArrows(match, archer) - 1"
+        ></td>
         <td
           class="border w-16"
           :rowspan="getTeamSize(archer)"

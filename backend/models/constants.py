@@ -29,7 +29,7 @@ class ArcherPosition(str, Enum):
     RISSHA = "rissha"
 
 
-class MatchType(str, Enum):
+class MatchFormat(str, Enum):
     STANDARD = "standard"
     EMPEROR = "emperor"
     ENKIN = "enkin"

@@ -8,8 +8,9 @@ from ..api_models import (
     TeamInput,
     TournamentInput,
     TournamentNextStageInput,
+    TournamentTieBreakFormatInput
 )
-from ..models.constants import TournamentFormat, TournamentStage, TournamentStatus
+from ..models.constants import TournamentFormat, TournamentStage, TournamentStatus, MatchFormat
 from ..models.models import (
     Archer,
     ArcherTournamentLink,
@@ -112,6 +113,7 @@ async def post_tournament(
         end_date=data.end_date,
         status=data.status,
         target_count=data.target_count,
+        advancing_count=data.advancing_count,
     )
     session.add(tournament)
     session.commit()
@@ -143,12 +145,12 @@ async def next_stage(
         participant
         for participant in sorted_participants
         if participant.hit_count == least_hit_count
-    ]
+    ] if data.tie_breaker_needed else []
     advancing_participants = [
         participant
         for participant in sorted_participants
         if participant.hit_count > least_hit_count
-    ]
+    ] if data.tie_breaker_needed else sorted_participants
 
     # Update already qualified participants
     for participant in advancing_participants:
@@ -339,8 +341,25 @@ def pick_team_archers(
     return session.exec(select(Archer).where(Archer.id.in_(archer_ids))).all()
 
 
-def generate_individual_match(session: Session, tournament: Tournament):
-    archer_links = sorted(tournament.archers, key=lambda x: x.number)
+def filter_participant(
+    tournament: Tournament, participant: ArcherTournamentLink | Team
+):
+    if tournament.current_stage == TournamentStage.QUALIFIERS:
+        return True
+    elif tournament.current_stage == TournamentStage.QUALIFIERS_TIE_BREAK:
+        return participant.tie_break_qualifiers
+    elif tournament.current_stage == TournamentStage.FINALS:
+        return participant.qualifiers_place is not None
+    elif tournament.current_stage == TournamentStage.FINALS_TIE_BREAK:
+        return participant.tie_break_finals
+    return False
+
+
+def generate_individual_match(session: Session, match_format: MatchFormat, tournament: Tournament):
+    archer_links = filter(
+        lambda x: filter_participant(tournament, x), tournament.archers
+    )
+    archer_links = sorted(archer_links, key=lambda x: x.number)
     archers = session.exec(
         select(Archer).where(Archer.id.in_([link.archer_id for link in archer_links]))
     ).all()
@@ -351,6 +370,7 @@ def generate_individual_match(session: Session, tournament: Tournament):
 
     new_match = Match()
     new_match.tournament = tournament
+    new_match.format = match_format
     new_match.stage = tournament.current_stage
     new_match.archers = new_match_archers
 
@@ -362,8 +382,9 @@ def generate_individual_match(session: Session, tournament: Tournament):
     return tournament
 
 
-def generate_team_match(session: Session, tournament: Tournament):
-    teams = sorted(tournament.teams, key=lambda x: x.number)
+def generate_team_match(session: Session, match_format: MatchFormat, tournament: Tournament):
+    teams = filter(lambda x: filter_participant(tournament, x), tournament.teams)
+    teams = sorted(teams, key=lambda x: x.number)
     target_count = tournament.target_count
     matches = tournament.matches
 
@@ -371,6 +392,7 @@ def generate_team_match(session: Session, tournament: Tournament):
 
     new_match = Match()
     new_match.tournament = tournament
+    new_match.format = match_format
     new_match.stage = tournament.current_stage
     new_match.archers = new_match_archers
 
@@ -387,6 +409,7 @@ def generate_team_match(session: Session, tournament: Tournament):
 )
 async def add_match_to_tournament(
     tournament_id: int,
+    data: TournamentTieBreakFormatInput,
     session: Session = Depends(get_session),
 ):
     tournament = session.get(Tournament, tournament_id)
@@ -395,9 +418,9 @@ async def add_match_to_tournament(
 
     match tournament.format:
         case TournamentFormat.INDIVIDUAL:
-            tournament = generate_individual_match(session, tournament)
+            tournament = generate_individual_match(session, data.format, tournament)
         case TournamentFormat.TEAM:
-            tournament = generate_team_match(session, tournament)
+            tournament = generate_team_match(session, data.format, tournament)
         case _:
             raise HTTPException(status_code=400, detail="Invalid tournament format")
 

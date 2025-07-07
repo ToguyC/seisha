@@ -29,7 +29,7 @@ export enum ArcherPosition {
   RISSHA = 'rissha',
 }
 
-export enum MatchType {
+export enum MatchFormat {
   STANDARD = 'standard',
   EMPEROR = 'emperor',
   ENKIN = 'enkin',
