@@ -36,6 +36,13 @@ export enum MatchFormat {
   IZUME = 'izume',
 }
 
+export enum MatchArrows {
+  STANDARD = 4,
+  EMPEROR = 2,
+  ENKIN = 1,
+  IZUME = 1,
+}
+
 export enum HitOutcome {
   MISS = 0,
   HIT = 1,

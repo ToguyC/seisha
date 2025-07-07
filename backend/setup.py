@@ -239,7 +239,7 @@ if __name__ == "__main__":
                         )
                     )
 
-        for tournament_id, match_list in generate_structured_matches(20, 10).items():
+        for tournament_id, match_list in generate_structured_matches(16, 10).items():
             print(f"Processing matches for tournament ID: {tournament_id}")
             print(f"Number of matches: {len(match_list)}")
             tournament = session.get(Tournament, tournament_id)

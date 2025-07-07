@@ -146,6 +146,35 @@ const changeSort = (newSort: 'id' | 'hits') => {
   }
 }
 
+const getRank = (archer: ArcherWithTournamentData) => {
+  const allArchers = getArchers()
+
+  // Get hit counts for all archers
+  const archersWithHits = allArchers.map((a) => ({
+    archer: a,
+    hits: getHitCount(a.archer)[0],
+  }))
+
+  // Sort by hits in descending order (highest hits first)
+  archersWithHits.sort((a, b) => b.hits - a.hits)
+
+  // Find the target archer's hits
+  const targetHits = getHitCount(archer.archer)[0]
+
+  // Calculate rank with proper tie handling
+  let rank = 1
+  for (let i = 0; i < archersWithHits.length; i++) {
+    if (archersWithHits[i].hits > targetHits) {
+      rank = i + 2 // +2 because we want the rank after this group
+    } else if (archersWithHits[i].hits === targetHits) {
+      // Found our target or someone with same hits
+      break
+    }
+  }
+
+  return rank
+}
+
 const isQualified = (archer: ArcherWithTournamentData) => {
   if (tournament.format === TournamentFormat.INDIVIDUAL) {
     return stage === TournamentStage.QUALIFIERS && archer.qualifiers_place !== null
@@ -212,53 +241,38 @@ const isTieBreak = (archer: ArcherWithTournamentData) => {
           </div>
         </td>
         <td rowspan="2" class="border w-48">氏名</td>
-        <td v-if="!isIndividual" colspan="2" class="border">個人</td>
+        <td v-if="!isIndividual" class="border w-20">小計</td>
         <td
-          v-if="!isIndividual"
-          rowspan="2"
-          class="border w-20 hover:cursor-pointer"
-          :class="{ 'bg-gray-200': allowSorting }"
+          class="border w-16"
+          v-if="isIndividual"
+          :class="{
+            'hover:cursor-pointer bg-gray-200': allowSorting,
+          }"
           @click="changeSort('hits')"
         >
           <div class="w-full flex justify-center items-center gap-2">
             <ArrowDownIcon class="h-5 w-5" v-if="sorting === 'hits' && reversed && allowSorting" />
             <ArrowUpIcon class="h-5 w-5" v-if="sorting === 'hits' && !reversed && allowSorting" />
-            的中
+            合計
           </div>
         </td>
-        <td v-if="!isIndividual" rowspan="2" class="border w-20">割合（％）</td>
+        <td class="border w-16">最大</td>
         <td
-          v-if="!isIndividual && stage !== tournament.current_stage"
-          rowspan="2"
           class="border w-16"
-        >
-          格
-        </td>
-      </tr>
-      <tr>
-        <td
-          class="border w-16 hover:cursor-pointer"
+          v-if="!isIndividual"
           :class="{
-            'hover:cursor-pointer': isIndividual,
-            'bg-gray-200': isIndividual && allowSorting,
+            'hover:cursor-pointer bg-gray-200': allowSorting,
           }"
-          @click="isIndividual && changeSort('hits')"
+          @click="changeSort('hits')"
         >
           <div class="w-full flex justify-center items-center gap-2">
-            <ArrowDownIcon
-              class="h-5 w-5"
-              v-if="sorting === 'hits' && reversed && isIndividual && allowSorting"
-            />
-            <ArrowUpIcon
-              class="h-5 w-5"
-              v-if="sorting === 'hits' && !reversed && isIndividual && allowSorting"
-            />
-            的中
+            <ArrowDownIcon class="h-5 w-5" v-if="sorting === 'hits' && reversed && allowSorting" />
+            <ArrowUpIcon class="h-5 w-5" v-if="sorting === 'hits' && !reversed && allowSorting" />
+            合計
           </div>
         </td>
-        <td class="border w-16">合計</td>
-        <td v-if="isIndividual" rowspan="2" class="border w-16">割合（％）</td>
-        <td v-if="isIndividual && stage !== tournament.current_stage" class="border w-16">格</td>
+        <td v-if="stage !== tournament.current_stage" class="border w-16">順位</td>
+        <td v-if="stage !== tournament.current_stage" class="border w-16">格</td>
       </tr>
     </thead>
     <tbody class="text-center">
@@ -288,28 +302,28 @@ const isTieBreak = (archer: ArcherWithTournamentData) => {
           {{ getArcherTeam(archer.archer)?.name }}
         </td>
         <td class="border w-20">{{ getArcherNumber(archer) }}</td>
-        <td class="border w-20">{{ archer.archer.name }}</td>
+        <td class="border w-20 text-left pl-4">{{ archer.archer.name }}</td>
         <td class="border w-16">{{ getHitCount(archer.archer)[0] }}</td>
         <td class="border w-16">{{ getHitCount(archer.archer)[1] }}</td>
-        <td v-if="isIndividual" class="border w-16">
-          {{ (getHitCount(archer.archer)[2] * 100).toFixed(1) }}
-        </td>
         <template v-if="!isIndividual && getArcherNumber(archer) === 1">
           <td class="border w-20" :rowspan="getTeamSize(archer.archer)">
             {{ getTeamHitCount(getArcherTeam(archer.archer)!)[0] }} /
             {{ getTeamHitCount(getArcherTeam(archer.archer)!)[1] }}
           </td>
-          <td class="border w-20" :rowspan="getTeamSize(archer.archer)">
-            {{ (getTeamHitCount(getArcherTeam(archer.archer)!)[2] * 100).toFixed(1) }}
-          </td>
         </template>
         <template v-if="!isIndividual && stage !== tournament.current_stage">
+          <td v-if="getArcherNumber(archer) === 1" rowspan="2" class="border w-16">
+            {{ getRank(archer) }}位
+          </td>
           <td v-if="getArcherNumber(archer) === 1" rowspan="2" class="border w-16">
             <span v-if="isQualified(archer)"> Qualified </span>
             <span v-if="isTieBreak(archer)"> Tie Break </span>
           </td>
         </template>
         <template v-else>
+          <td v-if="stage !== tournament.current_stage" class="border w-16">
+            {{ getRank(archer) }}位
+          </td>
           <td v-if="stage !== tournament.current_stage" class="border w-16">
             <span v-if="isQualified(archer)"> Qualified </span>
             <span v-if="isTieBreak(archer)"> Tie Break </span>

@@ -50,12 +50,14 @@ const { levels } = defineProps({
           </svg>
           <RouterLink
             :to="level.url"
+            v-if="index !== levels.length - 1"
             class="ms-1 text-sm font-semibold text-gray-700 hover:text-amaranth-600 md:ms-2"
-            :class="{
-              'font-medium!': index === levels.length - 1,
-            }"
-            >{{ level.name }}</RouterLink
           >
+            {{ level.name }}
+          </RouterLink>
+          <span v-else class="ms-1 text-sm font-medium text-gray-700 md:ms-2">
+            {{ level.name }}
+          </span>
         </div>
       </li>
     </ol>

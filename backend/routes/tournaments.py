@@ -8,9 +8,14 @@ from ..api_models import (
     TeamInput,
     TournamentInput,
     TournamentNextStageInput,
-    TournamentTieBreakFormatInput
+    TournamentTieBreakFormatInput,
 )
-from ..models.constants import TournamentFormat, TournamentStage, TournamentStatus, MatchFormat
+from ..models.constants import (
+    TournamentFormat,
+    TournamentStage,
+    TournamentStatus,
+    MatchFormat,
+)
 from ..models.models import (
     Archer,
     ArcherTournamentLink,
@@ -141,16 +146,24 @@ async def next_stage(
         data.advancing_participants, key=lambda x: x.hit_count, reverse=True
     )
     least_hit_count = sorted_participants[-1].hit_count
-    tie_break_participants = [
-        participant
-        for participant in sorted_participants
-        if participant.hit_count == least_hit_count
-    ] if data.tie_breaker_needed else []
-    advancing_participants = [
-        participant
-        for participant in sorted_participants
-        if participant.hit_count > least_hit_count
-    ] if data.tie_breaker_needed else sorted_participants
+    tie_break_participants = (
+        [
+            participant
+            for participant in sorted_participants
+            if participant.hit_count == least_hit_count
+        ]
+        if data.tie_breaker_needed
+        else []
+    )
+    advancing_participants = (
+        [
+            participant
+            for participant in sorted_participants
+            if participant.hit_count > least_hit_count
+        ]
+        if data.tie_breaker_needed
+        else sorted_participants
+    )
 
     # Update already qualified participants
     for participant in advancing_participants:
@@ -355,7 +368,9 @@ def filter_participant(
     return False
 
 
-def generate_individual_match(session: Session, match_format: MatchFormat, tournament: Tournament):
+def generate_individual_match(
+    session: Session, match_format: MatchFormat, tournament: Tournament
+):
     archer_links = filter(
         lambda x: filter_participant(tournament, x), tournament.archers
     )
@@ -366,7 +381,10 @@ def generate_individual_match(session: Session, match_format: MatchFormat, tourn
     target_count = tournament.target_count
     matches = tournament.matches
 
-    new_match_archers = pick_match_archers(target_count, archers, matches)
+    if match_format in {MatchFormat.STANDARD, MatchFormat.EMPEROR}:
+        new_match_archers = pick_match_archers(target_count, archers, matches)
+    elif match_format in {MatchFormat.IZUME, MatchFormat.ENKIN}:
+        new_match_archers = archers
 
     new_match = Match()
     new_match.tournament = tournament
@@ -382,7 +400,9 @@ def generate_individual_match(session: Session, match_format: MatchFormat, tourn
     return tournament
 
 
-def generate_team_match(session: Session, match_format: MatchFormat, tournament: Tournament):
+def generate_team_match(
+    session: Session, match_format: MatchFormat, tournament: Tournament
+):
     teams = filter(lambda x: filter_participant(tournament, x), tournament.teams)
     teams = sorted(teams, key=lambda x: x.number)
     target_count = tournament.target_count

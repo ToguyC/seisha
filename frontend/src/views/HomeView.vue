@@ -44,7 +44,20 @@ onMounted(() => {
   <div>
     <div class="text-red-500 font-bold">
       TODO
+
+      <div class="text-3xl">
+        Point 1 à faire et ensuite modifier l'overview pour virer le nombre de flèches max possible.
+        A la place, mettre le nombre de flèches max calculé basé sur le format et le nombre de
+        tours, entre parenthèse à côté du total de touché
+      </div>
+
       <ol class="list-decimal list-inside">
+        <li class="my-2">
+          Tester de mettre dans le modèle de tournoi un champ "nb round qualif", "nb round finale"
+          et "current round" pour pouvoir mieux gérer les matches. Ca implique d'avoir aussi un
+          champ "round" dans le modèle de match pour savoir à quel tour on est. Le "current round"
+          serait reset lors du passage en phase finale.
+        </li>
         <li class="my-2">
           Si tie-break. La création de ces matchs ne doit prendre en compte que les participants à
           départager.
@@ -68,6 +81,28 @@ onMounted(() => {
         <li class="my-2">
           Bouton pour terminer le tie-break si il y a eu, et assigner les places des finalistes
           restantes.
+        </li>
+        <li class="my-2">
+          Faire un onglet dans les pages de tournoi pour voir le détail des différentes phases. Ca
+          comprend de faire :
+
+          <ul class="list-disc list-inside pl-4">
+            <li>Un onglet "Details" dans le menu de navigation (participants, qualifiers, etc)</li>
+            <li>
+              Un affichage des différentes phases du tournoi (qualifiers, tie-break, finals, etc)
+              les uns au dessus des autres
+            </li>
+            <li>
+              Afficher un tableau récapitulatif plus détaillé (pour chaque archer, afficher le
+              détail de chaque flèche tirée avec le sous-total par match, et le total final à la
+              fin) c.f.
+              <a
+                class="underline text-blue-700"
+                href="https://www.ikyf.org/worldtaikai2024/assets/img/Tournament_record_The_4th_World_Kyudo_Taikai(Aichi-Nagoya)2024.pdf"
+                >la coupe du monde</a
+              >
+            </li>
+          </ul>
         </li>
         <li class="my-2">
           Phase finale en élimination directe.
@@ -109,7 +144,13 @@ onMounted(() => {
 
       <div class="flex flex-col divide-y divide-gray-500">
         <div class="py-10 flex flex-col gap-4" v-for="tournament in liveTournaments">
-          <div class="text-xl font-semibold">{{ tournament.name }}</div>
+          <div class="text-xl font-semibold">
+            <RouterLink
+              :to="`/admin/tournaments/${tournament.id}`"
+              class="hover:text-amaranth-600"
+              >{{ tournament.name }}</RouterLink
+            >
+          </div>
 
           <Match
             v-for="match of getUnfinishedMatches(tournament)"
@@ -122,14 +163,7 @@ onMounted(() => {
             class="flex flex-col justify-center items-center gap-4"
             v-if="getUnfinishedMatches(tournament).length === 0"
           >
-            <p class="text-xl">Last played match</p>
-            <Match
-              v-if="lastMatch = getLastMatch(tournament)"
-              :match="lastMatch"
-              :tournament="tournament"
-              :readonly="true"
-              :key="getLastMatch(tournament)?.id"
-            />
+            <p class="text-xl">No ongoing matches</p>
           </div>
         </div>
       </div>
