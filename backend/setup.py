@@ -81,6 +81,16 @@ tournaments = [
         "status": "live",
         "current_stage": "finals",
     },
+    {
+        "name": "Test",
+        "format": "team",
+        "start_date": datetime(2025, 6, 26),
+        "end_date": datetime(2025, 6, 26),
+        "advancing_count": 2,
+        "target_count": 4,
+        "status": "live",
+        "current_stage": "qualifiers",
+    },
 ]
 
 teams = {
@@ -88,95 +98,15 @@ teams = {
         {"name": "Team A", "archers": [2, 3]},
         {"name": "Team B", "archers": [4, 1]},
         {"name": "Team C", "archers": [6, 7]},
-    ]
+    ],
+    3: [
+        {"name": "Team A", "archers": [1, 2]},
+        {"name": "Team B", "archers": [4, 5]},
+        {"name": "Team C", "archers": [7, 8]},
+    ],
 }
 
 individuals = {1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]}
-
-# matches = {
-#     1: [
-#         {
-#             "archers": [1, 2, 3, 4, 5],
-#             "finished": True,
-#             "created_at": datetime.now() - timedelta(hours=1),
-#             "series": [
-#                 {"archer_id": 1, "arrows": [0, 1, 1, 0]},
-#                 {"archer_id": 2, "arrows": [1, 0, 1, 0]},
-#                 {"archer_id": 3, "arrows": [0, 1, 0, 1]},
-#                 {"archer_id": 4, "arrows": [1, 1, 0, 0]},
-#                 {"archer_id": 5, "arrows": [0, 0, 1, 1]},
-#             ],
-#         },
-#         {
-#             "archers": [6, 7],
-#             "finished": True,
-#             "created_at": datetime.now() - timedelta(minutes=40),
-#             "series": [
-#                 {"archer_id": 6, "arrows": [1, 0, 0, 1]},
-#                 {"archer_id": 7, "arrows": [0, 1, 1, 0]},
-#             ],
-#         },
-#         {
-#             "archers": [1, 2, 3, 4, 5],
-#             "created_at": datetime.now() - timedelta(minutes=20),
-#             "series": [
-#                 {"archer_id": 1, "arrows": [1, 1, 1, 1]},
-#                 {"archer_id": 2, "arrows": [1, 0, 1, 1]},
-#                 {"archer_id": 3, "arrows": [1, 0, 0, 0]},
-#                 {"archer_id": 4, "arrows": [0, 1, 0, 1]},
-#                 {"archer_id": 5, "arrows": [0, 0, 1, 0]},
-#             ],
-#         },
-#         {
-#             "archers": [6, 7],
-#             "created_at": datetime.now() - timedelta(minutes=10),
-#             "series": [
-#                 {"archer_id": 6, "arrows": [0, 0, 1, 0]},
-#                 {"archer_id": 7, "arrows": [1, 1, 1, 1]},
-#             ],
-#         },
-#     ],
-#     2: [
-#         {
-#             "archers": [2, 3, 4, 1],
-#             "stage": "finals",
-#             "finished": True,
-#             "series": [
-#                 {"archer_id": 2, "arrows": [0, 1, 1, 0]},
-#                 {"archer_id": 3, "arrows": [1, 0, 1, 0]},
-#                 {"archer_id": 4, "arrows": [0, 1, 0, 1]},
-#                 {"archer_id": 1, "arrows": [1, 1, 0, 0]},
-#             ],
-#         },
-#         {
-#             "archers": [6, 7],
-#             "stage": "finals",
-#             "finished": True,
-#             "series": [
-#                 {"archer_id": 6, "arrows": [1, 0, 0, 1]},
-#                 {"archer_id": 7, "arrows": [0, 1, 1, 0]},
-#             ],
-#         },
-#         {
-#             "archers": [2, 3, 4, 1],
-#             "stage": "finals",
-#             "series": [
-#                 {"archer_id": 2, "arrows": [0]},
-#                 {"archer_id": 3, "arrows": [0]},
-#                 {"archer_id": 4, "arrows": [1]},
-#                 {"archer_id": 1, "arrows": [1]},
-#             ],
-#         },
-#         {
-#             "archers": [6, 7],
-#             "stage": "finals",
-#             "series": [
-#                 {"archer_id": 6, "arrows": [1, 0, 1]},
-#                 {"archer_id": 7, "arrows": [1, 1]},
-#             ],
-#         },
-#     ],
-# }
 
 
 def generate_rotating_matches(archer_list, target_count, num_matches):
@@ -223,7 +153,7 @@ def generate_rotating_matches(archer_list, target_count, num_matches):
 
 
 def generate_structured_matches(num_individual_matches, num_team_matches):
-    matches = {1: [], 2: []}
+    matches = {i + 1: [] for i in range(len(tournaments))}
 
     # Individual matches
     individual_archers = individuals[1]
@@ -235,11 +165,14 @@ def generate_structured_matches(num_individual_matches, num_team_matches):
     # Team matches
     ordered_team_archers = [aid for team in teams[2] for aid in team["archers"]]
     target_count_team = tournaments[1]["target_count"]
-    team_matches = generate_rotating_matches(
+    matches[2] = generate_rotating_matches(
         ordered_team_archers, target_count_team, num_team_matches
     )
-
-    matches[2] = team_matches
+    ordered_team_archers = [aid for team in teams[3] for aid in team["archers"]]
+    target_count_team = tournaments[2]["target_count"]
+    matches[3] = generate_rotating_matches(
+        ordered_team_archers, target_count_team, num_team_matches
+    )
 
     # Add 'stage' field to individual matches
     for match in matches[2]:
@@ -251,6 +184,9 @@ def generate_structured_matches(num_individual_matches, num_team_matches):
 
     for i in range(int(0.8 * len(matches[2]))):
         matches[2][i]["finished"] = True
+
+    for i in range(int(0.8 * len(matches[3]))):
+        matches[3][i]["finished"] = True
 
     return matches
 

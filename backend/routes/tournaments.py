@@ -1,5 +1,6 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import selectinload
 from sqlmodel import Session, func, select
 
 from ..api_models import (
@@ -7,8 +8,8 @@ from ..api_models import (
     TeamInput,
     TournamentInput,
     TournamentNextStageInput,
-    TournamentTieBreakParticipantsInput,
 )
+from ..models.constants import TournamentFormat, TournamentStage, TournamentStatus
 from ..models.models import (
     Archer,
     ArcherTournamentLink,
@@ -17,7 +18,6 @@ from ..models.models import (
     Tournament,
     TournamentWithEverything,
 )
-from ..models.constants import TournamentFormat, TournamentStage, TournamentStatus
 from ..utils.sqlite import get_session
 from ..utils.ws_manager_insance import ws_instance
 
@@ -283,14 +283,7 @@ async def add_team_to_tournament(
     return tournament
 
 
-def generate_individual_match(session: Session, tournament: Tournament):
-    archer_links = sorted(tournament.archers, key=lambda x: x.number)
-    archers = session.exec(
-        select(Archer).where(Archer.id.in_([link.archer_id for link in archer_links]))
-    ).all()
-    target_count = tournament.target_count
-    matches = tournament.matches
-
+def pick_match_archers(target_count: int, archers: List[Archer], matches: List[Match]):
     matches_per_archer = {
         archer.id: sum(
             1 for match in matches if archer.id in map(lambda x: x.id, match.archers)
@@ -304,10 +297,57 @@ def generate_individual_match(session: Session, tournament: Tournament):
         if matches_per_archer[archer.id] < most_played_archer
     ]
 
-    if len(archers_left_to_play) == 0:
-        new_match_archers = archers[:target_count]
-    else:
-        new_match_archers = archers_left_to_play[:target_count]
+    archers_to_user = archers_left_to_play or archers
+
+    return archers_to_user[:target_count]
+
+
+def pick_team_archers(
+    session: Session, target_count: int, teams: List[Team], matches: List[Match]
+):
+    representative_ids = [team.archers[0].archer_id for team in teams]
+
+    matches_per_representative = {
+        rep_id: sum(1 for match in matches if rep_id in [a.id for a in match.archers])
+        for rep_id in representative_ids
+    }
+
+    most_played = (
+        max(matches_per_representative.values()) if matches_per_representative else 0
+    )
+    teams_left_to_play = [
+        team
+        for team in teams
+        if matches_per_representative[team.archers[0].archer_id] < most_played
+    ]
+
+    teams_to_use = teams_left_to_play or teams
+
+    selected_teams = []
+    spots_remaining = target_count
+
+    for team in teams_to_use:
+        if spots_remaining <= 0:
+            break
+        selected_teams.append(team)
+        spots_remaining -= len(team.archers)
+
+    archer_ids = [
+        archer.archer_id for team in selected_teams for archer in team.archers
+    ]
+
+    return session.exec(select(Archer).where(Archer.id.in_(archer_ids))).all()
+
+
+def generate_individual_match(session: Session, tournament: Tournament):
+    archer_links = sorted(tournament.archers, key=lambda x: x.number)
+    archers = session.exec(
+        select(Archer).where(Archer.id.in_([link.archer_id for link in archer_links]))
+    ).all()
+    target_count = tournament.target_count
+    matches = tournament.matches
+
+    new_match_archers = pick_match_archers(target_count, archers, matches)
 
     new_match = Match()
     new_match.tournament = tournament
@@ -327,56 +367,7 @@ def generate_team_match(session: Session, tournament: Tournament):
     target_count = tournament.target_count
     matches = tournament.matches
 
-    team_representantives_links = [team.archers[0] for team in teams]
-    team_representantives = session.exec(
-        select(Archer).where(
-            Archer.id.in_([link.archer_id for link in team_representantives_links])
-        )
-    ).all()
-
-    matches_per_representative = {
-        representative.id: sum(
-            1
-            for match in matches
-            if representative.id in map(lambda x: x.id, match.archers)
-        )
-        for representative in team_representantives
-    }
-
-    most_played_representative = max(matches_per_representative.values())
-    teams_left_to_play = [
-        team
-        for team in teams
-        if matches_per_representative[team.archers[0].archer_id]
-        < most_played_representative
-    ]
-
-    def fill_spots(teams, target_count):
-        spots = target_count
-        new_match_teams = []
-
-        for team in teams:
-            if spots == 0:
-                break
-
-            new_match_teams.append(team)
-            spots -= len(team.archers)
-
-        return new_match_teams
-
-    if len(teams_left_to_play) == 0:
-        new_match_teams = fill_spots(teams, target_count)
-    else:
-        new_match_teams = fill_spots(teams_left_to_play, target_count)
-
-    new_match_archer_team_links = [
-        archer for team in new_match_teams for archer in team.archers
-    ]
-    new_match_archers = session.exec(
-        select(Archer).where(
-            Archer.id.in_([link.archer_id for link in new_match_archer_team_links])
-        )
-    ).all()
+    new_match_archers = pick_team_archers(session, target_count, teams, matches)
 
     new_match = Match()
     new_match.tournament = tournament

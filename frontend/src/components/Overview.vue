@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TournamentStage } from '@/models/constants'
+import { TournamentFormat, TournamentStage } from '@/models/constants'
 import type {
   Archer,
   ArcherWithTournamentData,
@@ -50,38 +50,37 @@ const getArcherNumber = (archer: ArcherWithTournamentData) => {
 }
 
 const getArchers = () => {
+  const filterParticipants = (p: ArcherWithTournamentData | Team) => {
+    if (stage === TournamentStage.QUALIFIERS || tournament.advancing_count === undefined) {
+      return true
+    } else if (stage === TournamentStage.QUALIFIERS_TIE_BREAK) {
+      return p.tie_break_qualifiers
+    } else if (stage === TournamentStage.FINALS) {
+      return p.qualifiers_place !== undefined
+    } else if (stage === TournamentStage.FINALS_TIE_BREAK) {
+      return p.tie_break_finals
+    }
+    return false
+  }
+
   if (isIndividual.value) {
-    return tournament.archers
-      .filter((a) => {
-        if (stage === TournamentStage.QUALIFIERS || tournament.advancing_count === undefined) {
-          return true
-        } else if (stage === TournamentStage.QUALIFIERS_TIE_BREAK) {
-          return a.tie_break_qualifiers
-        } else if (stage === TournamentStage.FINALS) {
-          return a.qualifiers_place !== undefined
-        } else if (stage === TournamentStage.FINALS_TIE_BREAK) {
-          return a.tie_break_finals
-        }
+    return tournament.archers.filter(filterParticipants).sort((a, b) => {
+      let compare = 0
 
-        return false
-      })
-      .sort((a, b) => {
-        let compare = 0
+      if (sorting.value === 'hits') {
+        const ratioA = getHitCount(a.archer)[2]
+        const ratioB = getHitCount(b.archer)[2]
+        compare = ratioA - ratioB
+      } else {
+        compare = a.archer.id - b.archer.id
+      }
 
-        if (sorting.value === 'hits') {
-          const ratioA = getHitCount(a.archer)[2]
-          const ratioB = getHitCount(b.archer)[2]
-          compare = ratioA - ratioB
-        } else {
-          compare = a.archer.id - b.archer.id
-        }
-
-        return reversed.value ? -compare : compare
-      })
+      return reversed.value ? -compare : compare
+    })
   }
 
   // Team tournament sorting
-  let sortedTeams = [...tournament.teams]
+  let sortedTeams = [...tournament.teams].filter(filterParticipants)
   if (sorting.value === 'hits') {
     sortedTeams.sort((a, b) => {
       const ratioA = getTeamHitCount(a)[2]
@@ -146,6 +145,31 @@ const changeSort = (newSort: 'id' | 'hits') => {
     reversed.value = newSort === 'hits' // applying the reversed order by default if sorting by hits
   }
 }
+
+const isQualified = (archer: ArcherWithTournamentData) => {
+  if (tournament.format === TournamentFormat.INDIVIDUAL) {
+    return stage === TournamentStage.QUALIFIERS && archer.qualifiers_place !== null
+  } else if (tournament.format === TournamentFormat.TEAM) {
+    const archer_team = getArcherTeam(archer.archer)
+    return stage === TournamentStage.QUALIFIERS && archer_team?.qualifiers_place !== null
+  }
+}
+
+const isTieBreak = (archer: ArcherWithTournamentData) => {
+  if (tournament.format === TournamentFormat.INDIVIDUAL) {
+    return (
+      (stage === TournamentStage.QUALIFIERS && archer.tie_break_qualifiers) ||
+      (stage === TournamentStage.FINALS && archer.tie_break_finals)
+    )
+  } else if (tournament.format === TournamentFormat.TEAM) {
+    const archer_team = getArcherTeam(archer.archer)
+    return (
+      (stage === TournamentStage.QUALIFIERS && archer_team?.tie_break_qualifiers) ||
+      (stage === TournamentStage.FINALS && archer_team?.tie_break_finals)
+    )
+  }
+  return false
+}
 </script>
 
 <template>
@@ -203,6 +227,13 @@ const changeSort = (newSort: 'id' | 'hits') => {
           </div>
         </td>
         <td v-if="!isIndividual" rowspan="2" class="border w-20">割合（％）</td>
+        <td
+          v-if="!isIndividual && stage !== tournament.current_stage"
+          rowspan="2"
+          class="border w-16"
+        >
+          格
+        </td>
       </tr>
       <tr>
         <td
@@ -227,7 +258,7 @@ const changeSort = (newSort: 'id' | 'hits') => {
         </td>
         <td class="border w-16">合計</td>
         <td v-if="isIndividual" rowspan="2" class="border w-16">割合（％）</td>
-        <td v-if="stage !== tournament.current_stage" class="border w-16">格</td>
+        <td v-if="isIndividual && stage !== tournament.current_stage" class="border w-16">格</td>
       </tr>
     </thead>
     <tbody class="text-center">
@@ -235,11 +266,8 @@ const changeSort = (newSort: 'id' | 'hits') => {
         v-for="archer in getArchers()"
         :key="archer.archer.id"
         :class="{
-          'bg-emerald-500/50':
-            stage === TournamentStage.QUALIFIERS && archer.qualifiers_place !== null,
-          'bg-gray-400/50':
-            (stage === TournamentStage.QUALIFIERS && archer.tie_break_qualifiers) ||
-            (stage === TournamentStage.FINALS && archer.tie_break_finals),
+          'bg-emerald-500/50': isQualified(archer),
+          'bg-gray-400/50': isTieBreak(archer),
           'bg-amber-400/50': stage === TournamentStage.FINALS && archer.finals_place === 1,
           'bg-slate-400/50': stage === TournamentStage.FINALS && archer.finals_place === 2,
           'bg-amber-800/50': stage === TournamentStage.FINALS && archer.finals_place === 3,
@@ -275,14 +303,18 @@ const changeSort = (newSort: 'id' | 'hits') => {
             {{ (getTeamHitCount(getArcherTeam(archer.archer)!)[2] * 100).toFixed(1) }}
           </td>
         </template>
-        <td v-if="stage !== tournament.current_stage" class="border w-16">
-          <span v-if="stage === TournamentStage.QUALIFIERS && archer.qualifiers_place !== null">
-            Qualified
-          </span>
-          <span v-if="stage === TournamentStage.QUALIFIERS && archer.tie_break_qualifiers">
-            Tie Break
-          </span>
-        </td>
+        <template v-if="!isIndividual && stage !== tournament.current_stage">
+          <td v-if="getArcherNumber(archer) === 1" rowspan="2" class="border w-16">
+            <span v-if="isQualified(archer)"> Qualified </span>
+            <span v-if="isTieBreak(archer)"> Tie Break </span>
+          </td>
+        </template>
+        <template v-else>
+          <td v-if="stage !== tournament.current_stage" class="border w-16">
+            <span v-if="isQualified(archer)"> Qualified </span>
+            <span v-if="isTieBreak(archer)"> Tie Break </span>
+          </td>
+        </template>
       </tr>
     </tbody>
   </table>

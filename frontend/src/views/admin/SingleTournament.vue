@@ -6,7 +6,7 @@ import ArchersList from '@/components/single-tournament/ArchersList.vue'
 import SingleTournamentHeader from '@/components/single-tournament/Header.vue'
 import Matches from '@/components/single-tournament/Matches.vue'
 import TeamsList from '@/components/single-tournament/TeamsList.vue'
-import { TournamentStage, TournamentStageName } from '@/models/constants'
+import { TournamentStage, TournamentStageName, TournamentStatus } from '@/models/constants'
 import { dummyTournamentWithRelations } from '@/models/dummy'
 import type {
   Archer,
@@ -50,7 +50,10 @@ const fetchTournament = (tournamentId: number) => {
     .then((res) => {
       console.log(res.data)
       tournament.value = res.data
-      activeTab.value = tabs.value[tournament.value.current_stage]
+
+      if (tournament.value.status !== TournamentStatus.UPCOMING) {
+        activeTab.value = tabs.value[tournament.value.current_stage]
+      }
 
       levels.value = levels.value.filter((level) => level.name !== tournament.value.name)
       levels.value.push({
@@ -71,10 +74,6 @@ const isTournamentOnlyFinals = (tournament: TournamentWithRelations) => {
 }
 
 const generateNextMatch = () => {
-  const tieBreak =
-    tournament.value.current_stage === TournamentStage.QUALIFIERS_TIE_BREAK ||
-    tournament.value.current_stage === TournamentStage.FINALS_TIE_BREAK
-
   postTournamentMatch(tournament.value.id)
     .then((res) => {
       fetchTournament(tournament.value.id)

@@ -197,6 +197,10 @@ class TeamPublic(TeamBase):
     id: int
     name: str
     number: int
+    qualifiers_place: int | None
+    finals_place: int | None
+    tie_break_qualifiers: bool
+    tie_break_finals: bool
 
 
 class TournamentBase(SQLModel):
