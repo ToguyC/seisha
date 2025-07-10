@@ -19,7 +19,7 @@ import type {
   Team,
   TournamentWithRelations,
 } from '@/models/models'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 type WithHitCount<T> = T & { hit_count: number[] }
@@ -44,7 +44,9 @@ const tabs = ref({
   [TournamentStage.FINALS]: TournamentStageName.finals,
   [TournamentStage.FINALS_TIE_BREAK]: TournamentStageName.finals_tie_break,
 })
-const activeTab = ref<string>(tabs.value[tournament.value.current_stage])
+const activeTab = ref<keyof typeof tabs.value>('participants')
+const activeTabLabel = computed(() => tabs.value[activeTab.value])
+
 const useEnkin = ref<boolean>(false)
 
 const isParticipantArcher = (participant: WithHitCount<Team | ArcherWithTournamentData>) => {
@@ -58,7 +60,7 @@ const fetchTournament = (tournamentId: number) => {
       console.log('Fetched tournament:', tournament.value)
 
       if (tournament.value.status !== TournamentStatus.UPCOMING) {
-        activeTab.value = tabs.value[tournament.value.current_stage]
+        activeTab.value = tournament.value.current_stage
       }
 
       levels.value = levels.value.filter((level) => level.name !== tournament.value.name)
@@ -133,10 +135,10 @@ const getTeamHitCount = (team: Team, stage: TournamentStage) => {
   return [hits, total, hits / total || 0]
 }
 
-const terminateQualifiers = () => {
+const terminateStage = () => {
   if (
     !confirm(
-      'Are you sure you want to terminate the qualifiers? This will end all qualifier rounds. This action cannot be undone.',
+      'Are you sure you want to terminate the stage? This will end all rounds for this stage. This action cannot be undone.',
     )
   ) {
     return
@@ -216,18 +218,18 @@ onMounted(() => {
     <div
       class="px-2 py-4 border-b-2 border-white text-gray-600 font-medium hover:border-b-gray-400 hover:cursor-pointer hover:text-black"
       :class="{
-        '!border-b-amaranth-400 !text-amaranth-400': activeTab === tabs['participants'],
+        '!border-b-amaranth-400 !text-amaranth-400': activeTab === 'participants',
       }"
-      @click="activeTab = tabs['participants']"
+      @click="activeTab = 'participants'"
     >
       {{ tabs['participants'] }}
     </div>
     <div
       class="px-2 py-4 border-b-2 border-white text-gray-600 font-medium hover:border-b-gray-400 hover:cursor-pointer hover:text-black"
       :class="{
-        '!border-b-amaranth-400 !text-amaranth-400': activeTab === tabs[TournamentStage.QUALIFIERS],
+        '!border-b-amaranth-400 !text-amaranth-400': activeTab === TournamentStage.QUALIFIERS,
       }"
-      @click="activeTab = tabs[TournamentStage.QUALIFIERS]"
+      @click="activeTab = TournamentStage.QUALIFIERS"
       v-if="!isTournamentOnlyFinals(tournament)"
     >
       {{ tabs[TournamentStage.QUALIFIERS] }}
@@ -236,9 +238,9 @@ onMounted(() => {
       class="px-2 py-4 border-b-2 border-white text-gray-600 font-medium hover:border-b-gray-400 hover:cursor-pointer hover:text-black"
       :class="{
         '!border-b-amaranth-400 !text-amaranth-400':
-          activeTab === tabs[TournamentStage.QUALIFIERS_TIE_BREAK],
+          activeTab === TournamentStage.QUALIFIERS_TIE_BREAK,
       }"
-      @click="activeTab = tabs[TournamentStage.QUALIFIERS_TIE_BREAK]"
+      @click="activeTab = TournamentStage.QUALIFIERS_TIE_BREAK"
       v-if="
         !isTournamentOnlyFinals(tournament) &&
         tournament.current_stage === TournamentStage.QUALIFIERS_TIE_BREAK
@@ -249,9 +251,9 @@ onMounted(() => {
     <div
       class="px-2 py-4 border-b-2 border-white text-gray-600 font-medium hover:border-b-gray-400 hover:cursor-pointer hover:text-black"
       :class="{
-        '!border-b-amaranth-400 !text-amaranth-400': activeTab === tabs[TournamentStage.FINALS],
+        '!border-b-amaranth-400 !text-amaranth-400': activeTab === TournamentStage.FINALS,
       }"
-      @click="activeTab = tabs[TournamentStage.FINALS]"
+      @click="activeTab = TournamentStage.FINALS"
       v-if="tournament.current_stage === TournamentStage.FINALS"
     >
       {{ tabs[TournamentStage.FINALS] }}
@@ -259,10 +261,9 @@ onMounted(() => {
     <div
       class="px-2 py-4 border-b-2 border-white text-gray-600 font-medium hover:border-b-gray-400 hover:cursor-pointer hover:text-black"
       :class="{
-        '!border-b-amaranth-400 !text-amaranth-400':
-          activeTab === tabs[TournamentStage.FINALS_TIE_BREAK],
+        '!border-b-amaranth-400 !text-amaranth-400': activeTab === TournamentStage.FINALS_TIE_BREAK,
       }"
-      @click="activeTab = tabs[TournamentStage.FINALS_TIE_BREAK]"
+      @click="activeTab = TournamentStage.FINALS_TIE_BREAK"
       v-if="tournament.current_stage === TournamentStage.FINALS_TIE_BREAK"
     >
       {{ tabs[TournamentStage.FINALS_TIE_BREAK] }}
@@ -270,7 +271,7 @@ onMounted(() => {
   </div>
 
   <div class="flex">
-    <div class="w-full py-5" v-if="activeTab === 'Participants'">
+    <div class="w-full py-5" v-if="activeTab === 'participants'">
       <ArchersList
         v-if="tournament.format === 'individual'"
         :tournament="tournament"
@@ -279,109 +280,33 @@ onMounted(() => {
       <TeamsList v-else :tournament="tournament" @fetch-tournament="fetchTournament" />
     </div>
 
-    <div class="w-full py-5" v-if="activeTab === 'Qualifiers'">
-      <div
-        class="flex justify-between items-center"
-        v-if="tournament.current_stage === 'qualifiers'"
-      >
-        <button
-          class="flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 hover:cursor-pointer"
-          @click="generateNextMatch"
-        >
-          <span>Create Next Match</span>
-        </button>
-
-        <button
-          class="flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 hover:cursor-pointer"
-          @click="terminateQualifiers"
-        >
-          Terminate Qualifiers
-        </button>
+    <div class="w-full py-5 grid grid-cols-2 gap-4" v-if="activeTab !== 'participants'">
+      <div class="flex flex-col">
+        <Overview :tournament="tournament" :stage="activeTab" />
       </div>
 
-      <div class="grid grid-cols-2 gap-4 pt-4">
-        <div class="flex flex-col">
-          <div class="pt-4 mb-2 pb-4 flex justify-between">
-            Overview
-            <div class="italic">Click on the gray columns to sort.</div>
-          </div>
-          <Overview :tournament="tournament" stage="qualifiers" />
+      <div class="flex flex-col gap-5">
+        <div
+          class="flex justify-between items-center"
+          v-if="tournament.current_stage === activeTab"
+        >
+          <button
+            class="flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-800 hover:cursor-pointer"
+            @click="generateNextMatch"
+          >
+            <span>Create Next Match</span>
+          </button>
+
+          <button
+            class="flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 hover:cursor-pointer"
+            @click="terminateStage"
+          >
+            Terminate {{ activeTabLabel }}
+          </button>
         </div>
-        <Matches :tournament="tournament" stage="qualifiers" @fetch-tournament="fetchTournament" />
+
+        <Matches :tournament="tournament" :stage="activeTab" @fetch-tournament="fetchTournament" />
       </div>
-    </div>
-
-    <div class="w-full py-5" v-if="activeTab === 'Qualifiers Tie Break'">
-      <div
-        class="flex justify-between items-center"
-        v-if="tournament.current_stage === 'qualifiers_tie_break'"
-      >
-        <button
-          class="flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 hover:cursor-pointer"
-          @click="generateNextMatch"
-        >
-          <span>Create Next Match</span>
-        </button>
-
-        <button
-          class="flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 hover:cursor-pointer"
-          @click="terminateTieBreak"
-        >
-          Terminate Qualifiers Tie Break
-        </button>
-      </div>
-
-      <div class="grid grid-cols-2 gap-4 pt-4">
-        <div class="flex flex-col">
-          <div class="pt-4 mb-2 pb-4 flex justify-between">
-            Overview
-            <div class="italic">Click on the gray columns to sort.</div>
-          </div>
-          <Overview :tournament="tournament" :stage="tournament.current_stage" />
-        </div>
-        <Matches
-          :tournament="tournament"
-          :stage="tournament.current_stage"
-          @fetch-tournament="fetchTournament"
-        />
-      </div>
-    </div>
-
-    <div class="w-full py-5" v-if="activeTab === 'Finals'">
-      <div class="flex justify-between items-center">
-        <button
-          class="flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 hover:cursor-pointer"
-          @click="generateNextMatch"
-        >
-          <span>Create Next Match</span>
-        </button>
-
-        <button
-          class="flex items-center text-sm font-semibold justify-center gap-4 px-4 py-2 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 hover:cursor-pointer"
-        >
-          Terminate Tournament
-        </button>
-      </div>
-
-      <div class="grid grid-cols-2 gap-4 pt-4">
-        <div class="flex flex-col">
-          <div class="mb-2 pt-4 pb-4 flex justify-between">
-            Overview
-            <div class="italic">Click on the highlighted columns to sort</div>
-          </div>
-          <Overview :tournament="tournament" stage="finals" />
-        </div>
-        <Matches
-          :tournament="tournament"
-          stage="finals"
-          @fetch-tournament="fetchTournament"
-          :collapsible="true"
-        />
-      </div>
-    </div>
-
-    <div class="w-full py-5" v-if="activeTab === 'Finals Tie Break'">
-      {{ tournament.archers.filter((a) => a.tie_break_finals) }}
     </div>
   </div>
 </template>
