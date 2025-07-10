@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TournamentStage } from '@/models/constants'
+import { HitOutcome, TournamentStage } from '@/models/constants'
 import type {
   Archer,
   ArcherWithTournamentData,
@@ -12,6 +12,7 @@ const { tournament, sorting, reversed, stage } = defineProps<{
   sorting: 'id' | 'hits'
   reversed: boolean
   stage: string
+  showDetails: boolean
 }>()
 
 const getArchers = () => {
@@ -134,6 +135,48 @@ const getRank = (archer: ArcherWithTournamentData) => {
 
   return rank
 }
+
+const getHitsPerRound = (archer: ArcherWithTournamentData, round: number) => {
+  const allSeries = tournament.matches
+    .filter((match) => match.stage === stage)
+    .sort((a, b) => a.id - b.id)
+    .flatMap((match) => match.series)
+    .filter((series) => series.archer.id === archer.archer.id)
+
+  if (allSeries[round] === undefined) {
+    return [-1, -1, -1, -1]
+  }
+
+  const parsed = JSON.parse(allSeries[round].arrows_raw) as number[]
+  return parsed.concat(Array(4 - parsed.length).fill(-1))
+}
+
+const getHitsPerRoundWithTotal = (archer: ArcherWithTournamentData, round: number) => {
+  const hits = getHitsPerRound(archer, round)
+  const total = hits.reduce((a, b) => (b === HitOutcome.HIT ? a + b : a), 0)
+  return { hits, total }
+}
+
+const arrowCycleUI = (arrowState: HitOutcome) => {
+  switch (arrowState) {
+    case HitOutcome.MISS:
+      return '⨉'
+    case HitOutcome.HIT:
+      return '◯'
+    case HitOutcome.ENSURE:
+      return '?'
+  }
+}
+
+const getRounds = () => {
+  if (stage === TournamentStage.QUALIFIERS) {
+    return tournament.qualifiers_round_count
+  } else if (stage === TournamentStage.FINALS) {
+    return tournament.finals_round_count
+  }
+
+  return 0
+}
 </script>
 
 <template>
@@ -150,22 +193,41 @@ const getRank = (archer: ArcherWithTournamentData) => {
   >
     <td
       v-if="getArcherNumber(archer) === 1"
-      class="border w-20"
+      class="border w-10"
       :rowspan="getTeamSize(archer.archer)"
     >
       {{ getArcherTeam(archer.archer)?.number }}
     </td>
     <td
       v-if="getArcherNumber(archer) === 1"
-      class="border w-32"
+      class="border w-20"
       :rowspan="getTeamSize(archer.archer)"
     >
       {{ getArcherTeam(archer.archer)?.name }}
     </td>
     <td class="border w-20">{{ getArcherNumber(archer) }}</td>
-    <td class="border w-20 text-left pl-4">{{ archer.archer.name }}</td>
+    <td class="border border-r-4 w-20 text-left pl-4">{{ archer.archer.name }}</td>
+    <template
+      v-if="[TournamentStage.QUALIFIERS, TournamentStage.FINALS].includes(stage as TournamentStage)"
+      v-for="i in getRounds()"
+    >
+      <template v-for="{ hits, total } in [getHitsPerRoundWithTotal(archer, i - 1)]">
+        <td
+          class="border w-8"
+          :class="{
+            'border-r-4': hitIdx === getRounds() - 1,
+          }"
+          v-if="showDetails"
+          v-for="(hit, hitIdx) in hits"
+        >
+          {{ arrowCycleUI(hit) }}
+        </td>
+        <td class="border border-r-4 w-8">
+          {{ total }}
+        </td>
+      </template>
+    </template>
     <td class="border w-16">{{ getHitCount(archer.archer)[0] }}</td>
-    <td class="border w-16">{{ getHitCount(archer.archer)[1] }}</td>
     <template v-if="getArcherNumber(archer) === 1">
       <td class="border w-20" :rowspan="getTeamSize(archer.archer)">
         {{ getTeamHitCount(getArcherTeam(archer.archer)!)[0] }} /

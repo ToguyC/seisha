@@ -62,6 +62,7 @@ const changeSort = (newSort: 'id' | 'hits') => {
         :allowSorting="allowSorting"
         :sorting="sorting"
         :reversed="reversed"
+        :show-details="showDetails"
         @changeSort="changeSort"
       />
     </thead>
@@ -80,6 +81,7 @@ const changeSort = (newSort: 'id' | 'hits') => {
         :stage="stage"
         :sorting="sorting"
         :reversed="reversed"
+        :show-details="showDetails"
       />
     </tbody>
   </table>
