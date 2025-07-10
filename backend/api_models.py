@@ -30,6 +30,8 @@ class TournamentInput(BaseModel):
     status: TournamentStatus = TournamentStatus.UPCOMING
     current_stage: TournamentStage = TournamentStage.QUALIFIERS
     advancing_count: int = 8
+    qualifiers_round_count: int = 0
+    finals_round_count: int = 0
     target_count: int
 
 

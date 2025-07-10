@@ -9,6 +9,8 @@ export const dummyTournamentWithRelations: TournamentWithRelations = {
   format: TournamentFormat.INDIVIDUAL,
   status: TournamentStatus.UPCOMING,
   advancing_count: 0,
+  qualifiers_round_count: 0,
+  finals_round_count: 0,
   current_stage: TournamentStage.QUALIFIERS,
   created_at: '',
   updated_at: '',

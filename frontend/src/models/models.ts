@@ -53,6 +53,8 @@ export type Tournament = {
   status: TournamentStatus
   current_stage: TournamentStage
   advancing_count: number | null
+  qualifiers_round_count: number
+  finals_round_count: number
   target_count: number
   created_at: string
   updated_at: string

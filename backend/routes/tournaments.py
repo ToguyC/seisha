@@ -119,6 +119,8 @@ async def post_tournament(
         status=data.status,
         target_count=data.target_count,
         advancing_count=data.advancing_count,
+        qualifiers_round_count=data.qualifiers_round_count,
+        finals_round_count=data.finals_round_count,
     )
     session.add(tournament)
     session.commit()

@@ -210,6 +210,8 @@ class TournamentBase(SQLModel):
     format: TournamentFormat = Field(default=TournamentFormat.INDIVIDUAL)
     current_stage: TournamentStage = Field(default=TournamentStage.QUALIFIERS)
     advancing_count: int | None = Field(nullable=True)
+    qualifiers_round_count: int = Field(default=0)
+    finals_round_count: int = Field(default=0)
     target_count: int = Field(default=5)
     status: TournamentStatus = Field(default=TournamentStatus.UPCOMING)
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))
