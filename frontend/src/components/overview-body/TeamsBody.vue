@@ -6,6 +6,7 @@ import type {
   Team,
   TournamentWithRelations,
 } from '@/models/models'
+import { computed } from 'vue'
 
 const { tournament, sorting, reversed, stage } = defineProps<{
   tournament: TournamentWithRelations
@@ -14,6 +15,39 @@ const { tournament, sorting, reversed, stage } = defineProps<{
   stage: string
   showDetails: boolean
 }>()
+
+const teamRanks = computed(() => {
+  // Only consider teams that are part of the current stage
+  const relevantTeams = tournament.teams.filter((team) => {
+    if (stage === TournamentStage.QUALIFIERS) {
+      return true
+    } else if (stage === TournamentStage.FINALS) {
+      return team.qualifiers_place !== null
+    }
+    return false
+  })
+
+  const teamsWithHits = relevantTeams.map((team) => ({
+    id: team.id,
+    hits: getTeamHitCount(team)[0],
+  }))
+
+  // Sort by hits descending
+  teamsWithHits.sort((a, b) => b.hits - a.hits)
+
+  // Compute ranks with tie handling
+  const ranks = new Map<number, number>()
+  let currentRank = 1
+
+  for (let i = 0; i < teamsWithHits.length; i++) {
+    if (i > 0 && teamsWithHits[i].hits < teamsWithHits[i - 1].hits) {
+      currentRank = i + 1
+    }
+    ranks.set(teamsWithHits[i].id, currentRank)
+  }
+
+  return ranks
+})
 
 const getArchers = () => {
   const filterParticipants = (p: Team) => {
@@ -105,35 +139,6 @@ const isTieBreak = (archer: ArcherWithTournamentData) => {
     (stage === TournamentStage.QUALIFIERS && archer_team?.tie_break_qualifiers) ||
     (stage === TournamentStage.FINALS && archer_team?.tie_break_finals)
   )
-}
-
-const getRank = (archer: ArcherWithTournamentData) => {
-  const allArchers = getArchers()
-
-  // Get hit counts for all archers
-  const archersWithHits = allArchers.map((a) => ({
-    archer: a,
-    hits: getHitCount(a.archer)[0],
-  }))
-
-  // Sort by hits in descending order (highest hits first)
-  archersWithHits.sort((a, b) => b.hits - a.hits)
-
-  // Find the target archer's hits
-  const targetHits = getHitCount(archer.archer)[0]
-
-  // Calculate rank with proper tie handling
-  let rank = 1
-  for (let i = 0; i < archersWithHits.length; i++) {
-    if (archersWithHits[i].hits > targetHits) {
-      rank = i + 2 // +2 because we want the rank after this group
-    } else if (archersWithHits[i].hits === targetHits) {
-      // Found our target or someone with same hits
-      break
-    }
-  }
-
-  return rank
 }
 
 const getHitsPerRound = (archer: ArcherWithTournamentData, round: number) => {
@@ -236,7 +241,7 @@ const getRounds = () => {
     </template>
     <template v-if="stage !== tournament.current_stage">
       <td v-if="getArcherNumber(archer) === 1" rowspan="2" class="border w-16">
-        {{ getRank(archer) }}位
+        {{ teamRanks.get(getArcherTeam(archer.archer)!.id) }}位
       </td>
       <td v-if="getArcherNumber(archer) === 1" rowspan="2" class="border w-16">
         <span v-if="isQualified(archer)"> Qualified </span>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { HitOutcome, TournamentStage } from '@/models/constants'
 import type { Archer, ArcherWithTournamentData, TournamentWithRelations } from '@/models/models'
+import { computed } from 'vue'
 
 const { tournament, sorting, reversed, stage } = defineProps<{
   tournament: TournamentWithRelations
@@ -13,6 +14,31 @@ const { tournament, sorting, reversed, stage } = defineProps<{
 defineExpose<{
   getHitCount: (archer: Archer) => [number, number, number]
 }>()
+
+const archerRanks = computed(() => {
+  // Get all archers that will be shown
+  const allArchers = getArchers()
+
+  const archersWithHits = allArchers.map((archer) => ({
+    id: archer.archer.id,
+    hits: getHitCount(archer.archer)[0],
+  }))
+
+  // Sort by hits descending
+  archersWithHits.sort((a, b) => b.hits - a.hits)
+
+  const ranks = new Map<number, number>()
+  let currentRank = 1
+
+  for (let i = 0; i < archersWithHits.length; i++) {
+    if (i > 0 && archersWithHits[i].hits < archersWithHits[i - 1].hits) {
+      currentRank = i + 1
+    }
+    ranks.set(archersWithHits[i].id, currentRank)
+  }
+
+  return ranks
+})
 
 const getArchers = () => {
   const filterParticipants = (p: ArcherWithTournamentData) => {
@@ -92,35 +118,6 @@ const isTieBreak = (archer: ArcherWithTournamentData) => {
   )
 }
 
-const getRank = (archer: ArcherWithTournamentData) => {
-  const allArchers = getArchers()
-
-  // Get hit counts for all archers
-  const archersWithHits = allArchers.map((a) => ({
-    archer: a,
-    hits: getHitCount(a.archer)[0],
-  }))
-
-  // Sort by hits in descending order (highest hits first)
-  archersWithHits.sort((a, b) => b.hits - a.hits)
-
-  // Find the target archer's hits
-  const targetHits = getHitCount(archer.archer)[0]
-
-  // Calculate rank with proper tie handling
-  let rank = 1
-  for (let i = 0; i < archersWithHits.length; i++) {
-    if (archersWithHits[i].hits > targetHits) {
-      rank = i + 2 // +2 because we want the rank after this group
-    } else if (archersWithHits[i].hits === targetHits) {
-      // Found our target or someone with same hits
-      break
-    }
-  }
-
-  return rank
-}
-
 const arrowCycleUI = (arrowState: HitOutcome) => {
   switch (arrowState) {
     case HitOutcome.MISS:
@@ -179,7 +176,7 @@ const getRounds = () => {
     </template>
     <td class="border w-10 font-semibold">{{ getHitCount(archer.archer)[0] }}</td>
     <td v-if="stage !== tournament.current_stage" class="border border-l-4 w-16">
-      {{ getRank(archer) }}位
+      {{ archerRanks.get(archer.archer.id) }}位
     </td>
     <td v-if="stage !== tournament.current_stage" class="border w-16">
       <span v-if="isQualified(archer)"> Qualified </span>
