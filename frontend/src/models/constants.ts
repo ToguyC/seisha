@@ -24,6 +24,11 @@ export enum TournamentFormat {
   TEAM = 'team',
 }
 
+export enum TournamentType {
+  STANDARD = 'standard',
+  EMPEROR = 'emperor',
+}
+
 export enum ArcherPosition {
   ZASHA = 'zasha',
   RISSHA = 'rissha',
@@ -31,7 +36,6 @@ export enum ArcherPosition {
 
 export enum MatchFormat {
   STANDARD = 'standard',
-  EMPEROR = 'emperor',
   ENKIN = 'enkin',
   IZUME = 'izume',
 }

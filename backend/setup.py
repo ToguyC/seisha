@@ -64,8 +64,9 @@ archers_accuracy = [
 
 tournaments = [
     {
-        "name": "月来会　第10回　明弓館弓道大会",
+        "name": "月来会 第10回 明弓館弓道大会",
         "format": "individual",
+        "type": "standard",
         "start_date": datetime(2025, 6, 26),
         "end_date": datetime(2025, 6, 26),
         "advancing_count": 5,
@@ -78,6 +79,7 @@ tournaments = [
     {
         "name": "Tournoi Fun",
         "format": "team",
+        "type": "standard",
         "start_date": datetime(2025, 6, 26),
         "end_date": datetime(2025, 6, 26),
         "advancing_count": None,
@@ -90,6 +92,7 @@ tournaments = [
     {
         "name": "Test",
         "format": "team",
+        "type": "standard",
         "start_date": datetime(2025, 6, 26),
         "end_date": datetime(2025, 6, 26),
         "advancing_count": 2,

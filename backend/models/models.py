@@ -12,6 +12,7 @@ from .constants import (
     TournamentFormat,
     TournamentStage,
     TournamentStatus,
+    TournamentType
 )
 
 
@@ -208,6 +209,7 @@ class TournamentBase(SQLModel):
     start_date: datetime
     end_date: datetime
     format: TournamentFormat = Field(default=TournamentFormat.INDIVIDUAL)
+    type: TournamentType = Field(default=TournamentType.STANDARD)
     current_stage: TournamentStage = Field(default=TournamentStage.QUALIFIERS)
     advancing_count: int | None = Field(nullable=True)
     qualifiers_round_count: int = Field(default=0)

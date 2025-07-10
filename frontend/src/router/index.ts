@@ -11,21 +11,35 @@ const router = createRouter({
     {
       path: '/',
       component: HomeView,
+      meta: { title: 'Home' },
     },
     {
       path: '/embed/live-matches/:id/:matchIdx',
       name: 'embed-live-matches',
-      component: LiveMatches
+      component: LiveMatches,
+      meta: { title: 'Live Matches' },
     },
     {
       path: '/admin',
       children: [
-        { path: 'archers', component: Archers },
-        { path: 'tournaments', component: Tournaments },
-        { path: 'tournaments/:id', name: 'singleTournament', component: SingleTournament },
+        { path: 'archers', component: Archers, meta: { title: 'Archers' } },
+        { path: 'tournaments', component: Tournaments, meta: { title: 'Tournaments' } },
+        {
+          path: 'tournaments/:id',
+          name: 'singleTournament',
+          component: SingleTournament,
+          meta: { title: 'Tournament Details' },
+        },
       ],
+      meta: { title: 'Admin' },
     },
   ],
+})
+
+router.beforeEach((to, from, next) => {
+  const defaultTitle = 'Seisha - Archery Tournament Management'
+  document.title = to.meta.title ? `${to.meta.title} - Seisha` : defaultTitle
+  next()
 })
 
 export default router

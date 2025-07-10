@@ -69,6 +69,8 @@ const arrowCycleUI = (arrowState: HitOutcome) => {
         ?
       </div>
     </div>
-    <div v-else class="flex justify-center items-center">{{ arrowCycleUI(outcome) }}</div>
+    <div v-else class="flex justify-center items-center" :class="{
+      'bg-orange-100': outcome === HitOutcome.ENSURE,
+    }">{{ arrowCycleUI(outcome) }}</div>
   </div>
 </template>

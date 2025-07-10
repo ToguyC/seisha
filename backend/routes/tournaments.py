@@ -383,7 +383,7 @@ def generate_individual_match(
     target_count = tournament.target_count
     matches = tournament.matches
 
-    if match_format in {MatchFormat.STANDARD, MatchFormat.EMPEROR}:
+    if match_format == MatchFormat.STANDARD:
         new_match_archers = pick_match_archers(target_count, archers, matches)
     elif match_format in {MatchFormat.IZUME, MatchFormat.ENKIN}:
         new_match_archers = archers

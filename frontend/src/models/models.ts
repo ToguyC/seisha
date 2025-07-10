@@ -1,4 +1,4 @@
-import type { ArcherPosition, MatchFormat, TournamentFormat, TournamentStage, TournamentStatus } from "./constants"
+import type { ArcherPosition, MatchFormat, TournamentFormat, TournamentStage, TournamentStatus, TournamentType } from "./constants"
 
 export type Archer = {
   id: number
@@ -50,6 +50,7 @@ export type Tournament = {
   start_date: string
   end_date: string
   format: TournamentFormat
+  type: TournamentType
   status: TournamentStatus
   current_stage: TournamentStage
   advancing_count: number | null

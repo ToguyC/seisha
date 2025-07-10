@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { getAllLiveTournaments, getTournament } from '@/api/tournament'
 import Match from '@/components/Match.vue'
+import { dummyTournamentWithRelations } from '@/models/dummy'
 import type { TournamentWithRelations, Match as MatchModel } from '@/models/models'
 import { ws } from '@/plugins/sockets'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/16/solid'
@@ -9,22 +10,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
 const router = useRouter()
-const tournament = ref<TournamentWithRelations>({
-  id: 0,
-  name: '',
-  start_date: '',
-  end_date: '',
-  format: '',
-  status: '',
-  advancing_count: 0,
-  current_stage: '',
-  created_at: '',
-  updated_at: '',
-  target_count: 0,
-  archers: [],
-  teams: [],
-  matches: [],
-})
+const tournament = ref<TournamentWithRelations>(dummyTournamentWithRelations)
 const currentMatch = ref<MatchModel | null>(null)
 const currentMatchIdx = ref(route.params.matchIdx ? Number(route.params.matchIdx) : 0)
 

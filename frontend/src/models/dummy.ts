@@ -1,4 +1,4 @@
-import { TournamentFormat, TournamentStage, TournamentStatus } from './constants'
+import { TournamentFormat, TournamentStage, TournamentStatus, TournamentType } from './constants'
 import type { TournamentWithRelations } from './models'
 
 export const dummyTournamentWithRelations: TournamentWithRelations = {
@@ -7,6 +7,7 @@ export const dummyTournamentWithRelations: TournamentWithRelations = {
   start_date: '',
   end_date: '',
   format: TournamentFormat.INDIVIDUAL,
+  type: TournamentType.STANDARD,
   status: TournamentStatus.UPCOMING,
   advancing_count: 0,
   qualifiers_round_count: 0,

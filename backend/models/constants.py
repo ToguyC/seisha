@@ -1,9 +1,11 @@
 from enum import Enum
 
+
 class HitOutcome(int, Enum):
     MISS = 0
     HIT = 1
     ENSURE = 2
+
 
 class TournamentStage(str, Enum):
     QUALIFIERS = "qualifiers"
@@ -24,6 +26,11 @@ class TournamentFormat(str, Enum):
     TEAM = "team"
 
 
+class TournamentType(str, Enum):
+    STANDARD = "standard"
+    EMPEROR = "emperor"
+
+
 class ArcherPosition(str, Enum):
     ZASHA = "zasha"
     RISSHA = "rissha"
@@ -31,9 +38,9 @@ class ArcherPosition(str, Enum):
 
 class MatchFormat(str, Enum):
     STANDARD = "standard"
-    EMPEROR = "emperor"
     ENKIN = "enkin"
     IZUME = "izume"
+
 
 class MatchArrows(int, Enum):
     STANDARD = 4

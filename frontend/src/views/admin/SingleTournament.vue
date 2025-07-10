@@ -8,6 +8,7 @@ import Matches from '@/components/single-tournament/Matches.vue'
 import TeamsList from '@/components/single-tournament/TeamsList.vue'
 import {
   MatchFormat,
+  TournamentFormat,
   TournamentStage,
   TournamentStageName,
   TournamentStatus,
@@ -47,7 +48,8 @@ const tabs = ref({
 const activeTab = ref<keyof typeof tabs.value>('participants')
 const activeTabLabel = computed(() => tabs.value[activeTab.value])
 
-const useEnkin = ref<boolean>(false)
+const useEnkin = ref(false)
+const showOverviewDetails = ref(false)
 
 const isParticipantArcher = (participant: WithHitCount<Team | ArcherWithTournamentData>) => {
   return 'archer' in participant
@@ -57,7 +59,7 @@ const fetchTournament = (tournamentId: number) => {
   getTournament(tournamentId)
     .then((res) => {
       tournament.value = res.data
-      console.log('Fetched tournament:', tournament.value)
+      document.title = `${tournament.value.name} - Seisha`
 
       if (tournament.value.status !== TournamentStatus.UPCOMING) {
         activeTab.value = tournament.value.current_stage
@@ -280,12 +282,40 @@ onMounted(() => {
       <TeamsList v-else :tournament="tournament" @fetch-tournament="fetchTournament" />
     </div>
 
-    <div class="w-full py-5 grid grid-cols-2 gap-4" v-if="activeTab !== 'participants'">
+    <div class="w-full py-5 grid grid-cols-1 gap-12" v-if="activeTab !== 'participants'">
       <div class="flex flex-col">
-        <Overview :tournament="tournament" :stage="activeTab" />
+        <div class="text-2xl font-semibold mb-5 flex justify-between">
+          Overview
+
+          <div class="flex items-start">
+            <div class="flex items-center h-5">
+              <input
+                id="show-overview-details"
+                type="checkbox"
+                class="w-4 h-4 border border-gray-300 rounded-sm bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800"
+                required
+                v-model="showOverviewDetails"
+              />
+            </div>
+            <label
+              for="show-overview-details"
+              class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+            >
+              Show Details
+            </label>
+          </div>
+        </div>
+        <Overview
+          :tournament="tournament"
+          :stage="activeTab"
+          :allow-sorting="true"
+          :show-details="showOverviewDetails"
+        />
       </div>
 
       <div class="flex flex-col gap-5">
+        <div class="text-2xl font-semibold">Matches</div>
+
         <div
           class="flex justify-between items-center"
           v-if="tournament.current_stage === activeTab"
