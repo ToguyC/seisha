@@ -9,10 +9,11 @@ from .constants import (
     ArcherPosition,
     HitOutcome,
     MatchFormat,
+    MatchArrows,
     TournamentFormat,
     TournamentStage,
     TournamentStatus,
-    TournamentType
+    TournamentType,
 )
 
 
@@ -118,7 +119,7 @@ class Series(SeriesBase, table=True):
 
 class SeriesPublic(SeriesBase):
     id: int
-    arrows_raw: str
+    arrows_raw: str  # JSON string representation of arrows. In Enkin, the first arrow is the position of the archer.
 
     @property
     def arrows(self) -> List[HitOutcome]:
@@ -148,17 +149,24 @@ class Match(MatchBase, table=True):
 
     @property
     def verify_finish(self) -> bool:
-        match self.format:
-            case MatchFormat.STANDARD | MatchFormat.EMPEROR:
-                arrows_shot = 4 if self.format == MatchFormat.STANDARD else 2
+        arrows_shot = MatchArrows[self.format.name].value
 
-                finished_series = sum(
-                    1 for s in self.series if len(s.arrows) == arrows_shot
-                )
-                any_unknown = any(HitOutcome.ENSURE in s.arrows for s in self.series)
-                return not any_unknown and finished_series == len(self.archers)
+        finished_series = sum(1 for s in self.series if len(s.arrows) == arrows_shot)
 
-        return False
+        if self.format != MatchFormat.ENKIN:
+            undeceided = any(HitOutcome.ENSURE in s.arrows for s in self.series)
+        else:
+            # check whether all archers have shot their first arrow
+            first_arrows = [s.arrows[0] if s.arrows else None for s in self.series]
+
+            if len(first_arrows) < len(self.archers):
+                undeceided = True
+            else:
+                # check if all archers have a distinct position
+                distinct_first_arrows = set(first_arrows)
+                undeceided = len(distinct_first_arrows) < len(self.archers)
+
+        return not undeceided and finished_series == len(self.archers)
 
 
 class MatchPublic(MatchBase):
@@ -213,7 +221,9 @@ class TournamentBase(SQLModel):
     current_stage: TournamentStage = Field(default=TournamentStage.QUALIFIERS)
     advancing_count: int | None = Field(nullable=True)
     qualifiers_round_count: int = Field(default=0)
+    had_qualifiers_tie_break: bool = Field(default=False)
     finals_round_count: int = Field(default=0)
+    had_finals_tie_break: bool = Field(default=False)
     target_count: int = Field(default=5)
     status: TournamentStatus = Field(default=TournamentStatus.UPCOMING)
     created_at: datetime = Field(sa_column=Column(DateTime, default=func.now()))

@@ -32,6 +32,7 @@ const remainingArrows = (match: Match, archer: Archer) => {
 </script>
 
 <template>
+  IZUME
   <table class="w-full border border-separate border-spacing-0">
     <thead class="text-center">
       <tr>

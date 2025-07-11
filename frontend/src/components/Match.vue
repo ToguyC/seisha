@@ -5,6 +5,7 @@ import type { Archer, Match, Team, TournamentWithRelations } from '@/models/mode
 import { computed, ref } from 'vue'
 import Standard from './matches/Standard.vue'
 import Izume from './matches/Izume.vue'
+import Enkin from './matches/Enkin.vue'
 
 const { match, tournament, readonly } = defineProps<{
   match: Match
@@ -127,24 +128,6 @@ const matchStageName = (match: Match) => {
       break
   }
 }
-
-const getQualifiersSlotLeft = () => {
-  if (tournament.advancing_count === null) {
-    return 0
-  }
-
-  if (tournament.format === TournamentFormat.INDIVIDUAL) {
-    const alreadyQualified = tournament.archers.filter((a) => a.qualifiers_place !== null).length
-
-    return tournament.advancing_count - alreadyQualified
-  } else {
-    const alreadyQualified = tournament.teams
-      .filter((t) => t.qualifiers_place !== null)
-      .flatMap((t) => t.archers).length
-
-    return tournament.advancing_count - alreadyQualified
-  }
-}
 </script>
 
 <template>
@@ -179,5 +162,23 @@ const getQualifiersSlotLeft = () => {
     :get-total-arrows="getTotalArrows"
     :get-total-unkowns="getTotalUnkowns"
     :shot-arrow="shotArrow"
+  />
+  <Enkin
+    v-else-if="match.format === MatchFormat.ENKIN"
+    :tournament="tournament"
+    :match="match"
+    :is-individual="isIndividual"
+    :readonly="readonly"
+    :match-stage-name="matchStageName"
+    :get-archers="getArchers"
+    :get-team-size="getTeamSize"
+    :get-archer-number="getArcherNumber"
+    :get-archer-team="getArcherTeam"
+    :get-archer-series-arrows="getArcherSeriesArrows"
+    :set-arrow-outcome="setArrowOutcome"
+    :get-total-arrows="getTotalArrows"
+    :get-total-unkowns="getTotalUnkowns"
+    :shot-arrow="shotArrow"
+    @fetch-tournament="fetchTournament"
   />
 </template>

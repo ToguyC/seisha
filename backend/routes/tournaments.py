@@ -8,7 +8,7 @@ from ..api_models import (
     TeamInput,
     TournamentInput,
     TournamentNextStageInput,
-    TournamentTieBreakFormatInput,
+    MatchIzumeParticipantsInput,
 )
 from ..models.constants import (
     TournamentFormat,
@@ -128,7 +128,7 @@ async def post_tournament(
     return tournament
 
 
-@router.post("/tournaments/{tournament_id}/stage")
+@router.put("/tournaments/{tournament_id}/stage")
 async def next_stage(
     tournament_id: int,
     data: TournamentNextStageInput,
@@ -172,22 +172,24 @@ async def next_stage(
         qualifiers_place = sorted_participants.index(participant) + 1
 
         if tournament.format == TournamentFormat.INDIVIDUAL:
+            place_offset = sum([1 for a in tournament.archers if a.qualifiers_place is not None])
             archer = session.get(ArcherTournamentLink, (participant.id, tournament_id))
             if not archer:
                 raise HTTPException(
                     status_code=404, detail="Archer not found for advancing"
                 )
-            archer.qualifiers_place = qualifiers_place
+            archer.qualifiers_place = qualifiers_place + place_offset
             session.add(archer)
             session.commit()
             session.refresh(archer)
         elif tournament.format == TournamentFormat.TEAM:
+            place_offset = sum([1 for t in tournament.teams if t.qualifiers_place is not None])
             team = session.get(Team, participant.id)
             if not team:
                 raise HTTPException(
                     status_code=404, detail="Team not found for advancing"
                 )
-            team.qualifiers_place = qualifiers_place
+            team.qualifiers_place = qualifiers_place + place_offset
             session.add(team)
             session.commit()
             session.refresh(team)
@@ -195,8 +197,10 @@ async def next_stage(
     # Handle tie-break participants
     if data.tie_breaker_needed:
         if tournament.current_stage == TournamentStage.QUALIFIERS:
+            tournament.had_qualifiers_tie_break = True
             tournament.current_stage = TournamentStage.QUALIFIERS_TIE_BREAK
         elif tournament.current_stage == TournamentStage.FINALS:
+            tournament.had_finals_tie_break = True
             tournament.current_stage = TournamentStage.FINALS_TIE_BREAK
         else:
             raise HTTPException(
@@ -233,7 +237,7 @@ async def next_stage(
 
                 session.add(team)
     else:
-        if tournament.current_stage == TournamentStage.QUALIFIERS:
+        if tournament.current_stage in [TournamentStage.QUALIFIERS, TournamentStage.QUALIFIERS_TIE_BREAK]:
             tournament.current_stage = TournamentStage.FINALS
         elif tournament.current_stage == TournamentStage.FINALS:
             tournament.status = TournamentStatus.FINISHED
@@ -371,11 +375,15 @@ def filter_participant(
 
 
 def generate_individual_match(
-    session: Session, match_format: MatchFormat, tournament: Tournament
+    session: Session, tournament: Tournament, izume_archers: List[int]
 ):
     archer_links = filter(
         lambda x: filter_participant(tournament, x), tournament.archers
     )
+
+    if izume_archers:
+        archer_links = filter(lambda x: x.archer_id in izume_archers, archer_links)
+
     archer_links = sorted(archer_links, key=lambda x: x.number)
     archers = session.exec(
         select(Archer).where(Archer.id.in_([link.archer_id for link in archer_links]))
@@ -383,9 +391,21 @@ def generate_individual_match(
     target_count = tournament.target_count
     matches = tournament.matches
 
+    match_format = MatchFormat.STANDARD
+
+    if tournament.current_stage == TournamentStage.QUALIFIERS_TIE_BREAK:
+        match_format = MatchFormat.ENKIN
+    elif tournament.current_stage == TournamentStage.FINALS_TIE_BREAK:
+        is_first_place_decided = any([a.finals_place == 1 for a in tournament.archers])
+
+        if is_first_place_decided:
+            match_format = MatchFormat.ENKIN
+        else:
+            match_format = MatchFormat.IZUME
+
     if match_format == MatchFormat.STANDARD:
         new_match_archers = pick_match_archers(target_count, archers, matches)
-    elif match_format in {MatchFormat.IZUME, MatchFormat.ENKIN}:
+    else:
         new_match_archers = archers
 
     new_match = Match()
@@ -403,14 +423,29 @@ def generate_individual_match(
 
 
 def generate_team_match(
-    session: Session, match_format: MatchFormat, tournament: Tournament
+    session: Session, tournament: Tournament, izume_teams: List[int]
 ):
     teams = filter(lambda x: filter_participant(tournament, x), tournament.teams)
+
+    if izume_teams:
+        teams = filter(lambda x: x.id in izume_teams, teams)
+
     teams = sorted(teams, key=lambda x: x.number)
     target_count = tournament.target_count
     matches = tournament.matches
 
-    new_match_archers = pick_team_archers(session, target_count, teams, matches)
+    match_format = MatchFormat.STANDARD
+
+    if tournament.current_stage in [
+        TournamentStage.QUALIFIERS_TIE_BREAK,
+        TournamentStage.FINALS_TIE_BREAK,
+    ]:
+        match_format = MatchFormat.IZUME
+
+    if match_format == MatchFormat.STANDARD:
+        new_match_archers = pick_team_archers(session, target_count, teams, matches)
+    else:
+        new_match_archers = [archer.archer for team in teams for archer in team.archers]
 
     new_match = Match()
     new_match.tournament = tournament
@@ -431,7 +466,7 @@ def generate_team_match(
 )
 async def add_match_to_tournament(
     tournament_id: int,
-    data: TournamentTieBreakFormatInput,
+    data: MatchIzumeParticipantsInput,
     session: Session = Depends(get_session),
 ):
     tournament = session.get(Tournament, tournament_id)
@@ -440,9 +475,9 @@ async def add_match_to_tournament(
 
     match tournament.format:
         case TournamentFormat.INDIVIDUAL:
-            tournament = generate_individual_match(session, data.format, tournament)
+            tournament = generate_individual_match(session, tournament, data.ids)
         case TournamentFormat.TEAM:
-            tournament = generate_team_match(session, data.format, tournament)
+            tournament = generate_team_match(session, tournament, data.ids)
         case _:
             raise HTTPException(status_code=400, detail="Invalid tournament format")
 

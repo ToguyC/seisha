@@ -4,7 +4,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 
-from ..api_models import MatchArrowInput
+from ..api_models import MatchArrowInput, MatchEnkinInput
 from ..models.models import Archer, Match, MatchWithSeries, Series
 from ..models.constants import MatchArrows
 from ..utils.sqlite import get_session
@@ -27,9 +27,6 @@ async def get_match(match_id: int, session: Session = Depends(get_session)):
     match = session.get(Match, match_id)
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
-
-    print(match.archers)
-    print(match.series)
 
     return match
 
@@ -186,5 +183,42 @@ async def update_arrow(
     session.commit()
     session.refresh(series)
     session.refresh(match)
+
+    return series
+
+@router.post("/matches/{match_id}/archers/{archer_id}/enkin-place")
+async def set_enkin_place(
+    match_id: int,
+    archer_id: int,
+    data: MatchEnkinInput,
+    session: Session = Depends(get_session),
+):
+    match = session.get(Match, match_id)
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+
+    archer = session.get(Archer, archer_id)
+    if not archer:
+        raise HTTPException(status_code=404, detail="Archer not found")
+
+    series = session.exec(
+        select(Series)
+        .where(
+            Series.archer_id == archer_id,
+            Series.match_id == match_id,
+        )
+        .order_by(Series.id.desc())
+    ).first()
+
+    if not series:
+        series = Series(archer_id=archer_id, match_id=match_id)
+
+    series.arrows_raw = json.dumps([data.place])
+
+    await ws_instance.broadcast("arrow update")
+
+    session.add(series)
+    session.commit()
+    session.refresh(series)
 
     return series

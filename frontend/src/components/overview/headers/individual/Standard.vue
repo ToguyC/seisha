@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { MatchArrows, TournamentStage, TournamentType } from '@/models/constants';
-import type { TournamentWithRelations } from '@/models/models';
-import { ArrowDownIcon, ArrowUpIcon } from '@heroicons/vue/16/solid';
+import { MatchArrows, TournamentStage, TournamentType } from '@/models/constants'
+import type { TournamentWithRelations } from '@/models/models'
+import { ArrowDownIcon, ArrowUpIcon } from '@heroicons/vue/16/solid'
 
 const { allowSorting, stage, tournament } = defineProps<{
   tournament: TournamentWithRelations
@@ -44,24 +44,20 @@ const getRounds = () => {
 <template>
   <tr>
     <td
-      rowspan="2"
-      class="border w-16 hover:cursor-pointer"
-      :class="{ 'bg-gray-200': allowSorting }"
+      class="border w-10 hover:cursor-pointer"
+      :class="{
+        'bg-gray-200': allowSorting,
+      }"
       @click="changeSort('id')"
     >
       <div class="w-full flex justify-center items-center gap-2">
         <ArrowDownIcon class="h-5 w-5" v-if="sorting === 'id' && reversed && allowSorting" />
         <ArrowUpIcon class="h-5 w-5" v-if="sorting === 'id' && !reversed && allowSorting" />
-        立番号
+        立順
       </div>
-    </td>
-    <td rowspan="2" class="border w-20">チーム名</td>
-    <td rowspan="2" class="border w-14">
-      <div class="w-full flex justify-center items-center gap-2">立順</div>
     </td>
     <td rowspan="2" class="border border-r-4 w-48">氏名</td>
     <td
-      v-if="[TournamentStage.QUALIFIERS, TournamentStage.FINALS].includes(stage as TournamentStage)"
       v-for="i in getRounds() * (showDetails ? 2 : 1)"
       class="border"
       :class="{
@@ -69,12 +65,11 @@ const getRounds = () => {
       }"
       :colspan="i % 2 == 1 && showDetails ? getMatchArrowsFromTournamentType(tournament.type) : 1"
     >
-      <span v-if="i % 2 == 1 && showDetails"> {{ i }}回目 </span>
+      <span v-if="i % 2 == 1 && showDetails"> {{ Math.ceil(i / 2) }}回目 </span>
       <span v-else>小計</span>
     </td>
-    <td class="border w-20">小計</td>
     <td
-      class="border w-16"
+      class="border w-10"
       :class="{
         'hover:cursor-pointer bg-gray-200': allowSorting,
       }"
@@ -86,7 +81,7 @@ const getRounds = () => {
         合計
       </div>
     </td>
-    <td v-if="stage !== currentStage" class="border w-16">順位</td>
+    <td v-if="stage !== currentStage" class="border border-l-4 w-16">順位</td>
     <td v-if="stage !== currentStage" class="border w-16">格</td>
   </tr>
 </template>

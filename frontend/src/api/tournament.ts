@@ -38,20 +38,20 @@ export const postTournamentArcher = async (tournamentId: number, archerId: numbe
   return api.post(`/tournaments/${tournamentId}/archers/${archerId}`)
 }
 
-export const postTournamentMatch = async (tournamentId: number, matchFormat: MatchFormat) => {
-  return api.post(`/tournaments/${tournamentId}/matches`, { format: matchFormat })
+export const postTournamentMatch = async (tournamentId: number, participants: number[]) => {
+  return api.post(`/tournaments/${tournamentId}/matches`, { ids: participants })
 }
 
 export const deleteTournamentArcher = async (tournamentId: number, archerId: number) => {
   return api.delete(`/tournaments/${tournamentId}/archers/${archerId}`)
 }
 
-export const postTournamentStage = async (
+export const putTournamentStage = async (
   tournamentId: number,
   advancingParticipants: { id: number; hit_count: number }[],
   tieBreakerNeeded: boolean,
 ) => {
-  return api.post(`/tournaments/${tournamentId}/stage`, {
+  return api.put(`/tournaments/${tournamentId}/stage`, {
     advancing_participants: advancingParticipants,
     tie_breaker_needed: tieBreakerNeeded,
   })

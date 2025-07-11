@@ -55,7 +55,9 @@ export type Tournament = {
   current_stage: TournamentStage
   advancing_count: number | null
   qualifiers_round_count: number
+  had_qualifiers_tie_break: boolean
   finals_round_count: number
+  had_finals_tie_break: boolean
   target_count: number
   created_at: string
   updated_at: string

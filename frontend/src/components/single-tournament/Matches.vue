@@ -5,6 +5,7 @@ import { ChevronDownIcon, TrashIcon } from '@heroicons/vue/16/solid'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { computed, ref } from 'vue'
 import Match from '../Match.vue'
+import { MatchFormat } from '@/models/constants'
 
 const { tournament, stage } = defineProps<{
   tournament: TournamentWithRelations
@@ -92,12 +93,6 @@ const finishMatch = (matchId: number) => {
                   hour12: false,
                 })
               }}
-              <div
-                v-if="matchContainsUnknowns(match.id)"
-                class="flex items-center gap-2 text-orange-500"
-              >
-                <ExclamationTriangleIcon class="w-5 h-5" /> Unknowns still presents
-              </div>
             </div>
 
             <div class="w-full flex justify-end gap-4">
@@ -111,7 +106,12 @@ const finishMatch = (matchId: number) => {
             </div>
           </div>
 
-          <Match :match="match" :tournament="tournament" :readonly="true" @fetch-tournament="fetchTournament" />
+          <Match
+            :match="match"
+            :tournament="tournament"
+            :readonly="true"
+            @fetch-tournament="fetchTournament"
+          />
         </div>
       </div>
     </div>
@@ -142,7 +142,7 @@ const finishMatch = (matchId: number) => {
                 })
               }}
               <div
-                v-if="matchContainsUnknowns(match.id)"
+                v-if="match.format !== MatchFormat.ENKIN && matchContainsUnknowns(match.id)"
                 class="flex items-center gap-2 text-orange-500"
               >
                 <ExclamationTriangleIcon class="w-5 h-5" /> Unknowns still presents

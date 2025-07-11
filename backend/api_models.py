@@ -3,7 +3,12 @@ from typing import List
 
 from pydantic import BaseModel
 
-from .models.constants import ArcherPosition, TournamentStage, TournamentStatus, MatchFormat
+from .models.constants import (
+    ArcherPosition,
+    TournamentStage,
+    TournamentStatus,
+    MatchFormat,
+)
 from .models.models import ArcherPublic, TournamentWithArchersAndTeams
 
 
@@ -15,6 +20,14 @@ class ArrowInput(BaseModel):
 
 class MatchArrowInput(BaseModel):
     arrow: int
+
+
+class MatchEnkinInput(BaseModel):
+    place: int
+
+
+class MatchIzumeParticipantsInput(BaseModel):
+    ids: List[int] = []
 
 
 class ArcherInput(BaseModel):
@@ -62,7 +75,7 @@ class ArcherSearchInput(BaseModel):
 
 class AdvancingParticipant(BaseModel):
     id: int
-    hit_count: int
+    hit_count: int  # in Enkin, a high hit count means a better place
 
 
 class TournamentNextStageInput(BaseModel):
@@ -72,7 +85,3 @@ class TournamentNextStageInput(BaseModel):
 
 class TournamentTieBreakParticipantsInput(BaseModel):
     stage: TournamentStage
-
-
-class TournamentTieBreakFormatInput(BaseModel):
-    format: MatchFormat

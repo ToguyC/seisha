@@ -11,10 +11,6 @@ const { tournament, sorting, reversed, stage } = defineProps<{
   showDetails: boolean
 }>()
 
-defineExpose<{
-  getHitCount: (archer: Archer) => [number, number, number]
-}>()
-
 const archerRanks = computed(() => {
   // Get all archers that will be shown
   const allArchers = getArchers()
@@ -154,10 +150,7 @@ const getRounds = () => {
   >
     <td class="border w-10">{{ archer.number }}</td>
     <td class="border border-r-4 w-20 text-left pl-4">{{ archer.archer.name }}</td>
-    <template
-      v-if="[TournamentStage.QUALIFIERS, TournamentStage.FINALS].includes(stage as TournamentStage)"
-      v-for="i in getRounds()"
-    >
+    <template v-for="i in getRounds()">
       <template v-for="{ hits, total } in [getHitsPerRoundWithTotal(archer, i - 1)]">
         <td
           class="border w-8"
@@ -174,7 +167,9 @@ const getRounds = () => {
         </td>
       </template>
     </template>
-    <td class="border w-10 font-semibold">{{ getHitCount(archer.archer)[0] }}</td>
+    <td class="border w-10 font-semibold">
+      {{ getHitCount(archer.archer)[0] }}
+    </td>
     <td v-if="stage !== tournament.current_stage" class="border border-l-4 w-16">
       {{ archerRanks.get(archer.archer.id) }}位
     </td>

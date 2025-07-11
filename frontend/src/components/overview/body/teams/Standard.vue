@@ -213,7 +213,6 @@ const getRounds = () => {
     <td class="border w-20">{{ getArcherNumber(archer) }}</td>
     <td class="border border-r-4 w-20 text-left pl-4">{{ archer.archer.name }}</td>
     <template
-      v-if="[TournamentStage.QUALIFIERS, TournamentStage.FINALS].includes(stage as TournamentStage)"
       v-for="i in getRounds()"
     >
       <template v-for="{ hits, total } in [getHitsPerRoundWithTotal(archer, i - 1)]">

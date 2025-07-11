@@ -17,7 +17,17 @@ export const putArrow = async (
   arrowId: number,
   arrowOutcome: HitOutcome,
 ): Promise<AxiosResponse<Series>> => {
-  return api.put(`/matches/${matchId}/archers/${archerId}/arrows/${arrowId}`, { arrow: arrowOutcome })
+  return api.put(`/matches/${matchId}/archers/${archerId}/arrows/${arrowId}`, {
+    arrow: arrowOutcome,
+  })
+}
+
+export const setEnkinPlace = async (
+  matchId: number,
+  archerId: number,
+  place: number,
+): Promise<AxiosResponse<Series>> => {
+  return api.post(`/matches/${matchId}/archers/${archerId}/enkin-place`, { place })
 }
 
 export const getArrow = async (
